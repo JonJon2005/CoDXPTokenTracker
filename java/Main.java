@@ -57,107 +57,148 @@ public class Main {
     }
 
     static TokenCategory pickCategory(Scanner sc) {
-        System.out.println("\n" + color(BOLD + "Choose token type:", BRIGHT_RED));
-        System.out.println("  1) " + color("Regular XP", LIGHT_GREEN));
-        System.out.println("  2) " + color("Weapon XP", LIGHT_BLUE));
-        System.out.println("  3) " + color("Battle Pass XP", ORANGE));
-        String s = sc.nextLine().trim();
-        switch (s) {
-            case "1":
-                return TokenCategory.REGULAR;
-            case "2":
-                return TokenCategory.WEAPON;
-            case "3":
-                return TokenCategory.BATTLEPASS;
-            default:
+        while (true) {
+            System.out.println("\n" + color(BOLD + "Choose token type:", BRIGHT_RED));
+            System.out.println("  1) " + color("Regular XP", LIGHT_GREEN));
+            System.out.println("  2) " + color("Weapon XP", LIGHT_BLUE));
+            System.out.println("  3) " + color("Battle Pass XP", ORANGE));
+            String s = sc.nextLine().trim();
+            if (s.isEmpty()) {
                 return null;
+            }
+            switch (s) {
+                case "1":
+                    return TokenCategory.REGULAR;
+                case "2":
+                    return TokenCategory.WEAPON;
+                case "3":
+                    return TokenCategory.BATTLEPASS;
+                default:
+                    System.out.println(color("Invalid token type. Please try again.", BRIGHT_RED));
+            }
         }
     }
 
     static void editSingle(Map<TokenCategory, List<Integer>> data, Scanner sc) {
         TokenCategory cat = pickCategory(sc);
         if (cat == null) {
-            System.out.println(color("Invalid token type.", BRIGHT_RED));
+            System.out.println(color("Edit cancelled.", BRIGHT_RED));
             return;
         }
         List<Integer> tokens = data.get(cat);
         String catColor = colorForCategory(cat);
 
-        System.out.println("\n" + color("Which duration do you want to edit?", catColor));
-        System.out.println("  1) 15 minutes");
-        System.out.println("  2) 30 minutes");
-        System.out.println("  3) 45 minutes");
-        System.out.println("  4) 60 minutes");
-        String choice = sc.nextLine().trim();
         Map<String, Integer> indexMap = new HashMap<>();
         indexMap.put("1", 0);
         indexMap.put("2", 1);
         indexMap.put("3", 2);
         indexMap.put("4", 3);
-        if (!indexMap.containsKey(choice)) {
-            System.out.println(color("Invalid duration.", BRIGHT_RED));
-            return;
+
+        int i;
+        while (true) {
+            System.out.println("\n" + color("Which duration do you want to edit?", catColor));
+            System.out.println("  1) 15 minutes");
+            System.out.println("  2) 30 minutes");
+            System.out.println("  3) 45 minutes");
+            System.out.println("  4) 60 minutes");
+            String choice = sc.nextLine().trim();
+            if (choice.isEmpty()) {
+                System.out.println(color("Edit cancelled.", BRIGHT_RED));
+                return;
+            }
+            if (indexMap.containsKey(choice)) {
+                i = indexMap.get(choice);
+                break;
+            }
+            System.out.println(color("Invalid duration. Please try again.", BRIGHT_RED));
         }
-        int i = indexMap.get(choice);
-        try {
-            System.out.print(color("Enter new token count for " + TokenLib.MINUTE_BUCKETS[i] + " minutes: ", catColor));
-            int newVal = Integer.parseInt(sc.nextLine().trim());
-            if (newVal < 0) newVal = 0;
-            tokens.set(i, newVal);
-            data.put(cat, tokens);
-        } catch (NumberFormatException e) {
-            System.out.println(color("Not a valid integer.", BRIGHT_RED));
+
+        while (true) {
+            System.out.print(color(
+                "Enter new token count for " + TokenLib.MINUTE_BUCKETS[i] + " minutes (blank to cancel): ",
+                catColor));
+            String raw = sc.nextLine().trim();
+            if (raw.isEmpty()) {
+                System.out.println(color("Edit cancelled.", BRIGHT_RED));
+                return;
+            }
+            try {
+                int newVal = Integer.parseInt(raw);
+                if (newVal < 0) newVal = 0;
+                tokens.set(i, newVal);
+                data.put(cat, tokens);
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println(color("Not a valid integer. Please try again.", BRIGHT_RED));
+            }
         }
     }
 
     static void editAllCategory(Map<TokenCategory, List<Integer>> data, Scanner sc) {
         TokenCategory cat = pickCategory(sc);
         if (cat == null) {
-            System.out.println(color("Invalid token type.", BRIGHT_RED));
+            System.out.println(color("Edit cancelled.", BRIGHT_RED));
             return;
         }
         String catColor = colorForCategory(cat);
-        System.out.println(color("Enter four integers for " + cat.displayName() + " (15, 30, 45, 60), separated by spaces.", catColor));
-        System.out.print(color("Example: 2 3 1 4\n> ", BRIGHT_WHITE));
-        String raw = sc.nextLine().trim();
-        String[] parts = raw.split("\\s+");
-        if (parts.length != 4) {
-            System.out.println(color("Please enter exactly four integers.", BRIGHT_RED));
-            return;
-        }
-        try {
-            List<Integer> vals = new ArrayList<>();
-            for (String p : parts) {
-                int v = Integer.parseInt(p);
-                vals.add(Math.max(0, v));
+
+        while (true) {
+            System.out.println(color(
+                "Enter four integers for " + cat.displayName() + " (15, 30, 45, 60), separated by spaces.",
+                catColor));
+            System.out.print(color("Example: 2 3 1 4\n> ", BRIGHT_WHITE));
+            String raw = sc.nextLine().trim();
+            if (raw.isEmpty()) {
+                System.out.println(color("Edit cancelled.", BRIGHT_RED));
+                return;
             }
-            data.put(cat, vals);
-        } catch (NumberFormatException e) {
-            System.out.println(color("One or more entries were not valid integers.", BRIGHT_RED));
+            String[] parts = raw.split("\\s+");
+            if (parts.length != 4) {
+                System.out.println(color("Please enter exactly four integers.", BRIGHT_RED));
+                continue;
+            }
+            try {
+                List<Integer> vals = new ArrayList<>();
+                for (String p : parts) {
+                    int v = Integer.parseInt(p);
+                    vals.add(Math.max(0, v));
+                }
+                data.put(cat, vals);
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println(color("One or more entries were not valid integers. Please try again.", BRIGHT_RED));
+            }
         }
     }
 
     static void editAllCategories(Map<TokenCategory, List<Integer>> data, Scanner sc) {
-        System.out.println(color("Enter 12 integers for Regular, Weapon, Battle Pass (each 15,30,45,60).", BRIGHT_RED));
-        System.out.println("Order: " + color("R15 R30 R45 R60", LIGHT_GREEN) + "  " + color("W15 W30 W45 W60", LIGHT_BLUE) + "  " + color("B15 B30 B45 B60", ORANGE));
-        System.out.print(color("Example: 1 0 2 0  0 1 0 0  3 0 0 1\n> ", BRIGHT_WHITE));
-        String raw = sc.nextLine().trim();
-        String[] parts = raw.split("\\s+");
-        if (parts.length != 12) {
-            System.out.println(color("Please enter exactly 12 integers.", BRIGHT_RED));
-            return;
-        }
-        try {
-            List<Integer> vals = new ArrayList<>();
-            for (String p : parts) {
-                int v = Integer.parseInt(p);
-                vals.add(Math.max(0, v));
+        while (true) {
+            System.out.println(color("Enter 12 integers for Regular, Weapon, Battle Pass (each 15,30,45,60).", BRIGHT_RED));
+            System.out.println("Order: " + color("R15 R30 R45 R60", LIGHT_GREEN) + "  " + color("W15 W30 W45 W60", LIGHT_BLUE) + "  " + color("B15 B30 B45 B60", ORANGE));
+            System.out.print(color("Example: 1 0 2 0  0 1 0 0  3 0 0 1\n> ", BRIGHT_WHITE));
+            String raw = sc.nextLine().trim();
+            if (raw.isEmpty()) {
+                System.out.println(color("Edit cancelled.", BRIGHT_RED));
+                return;
             }
-            data.put(TokenCategory.REGULAR, vals.subList(0, 4));
-            data.put(TokenCategory.WEAPON, vals.subList(4, 8));
-            data.put(TokenCategory.BATTLEPASS, vals.subList(8, 12));
-        } catch (NumberFormatException e) {
-            System.out.println(color("One or more entries were not valid integers.", BRIGHT_RED));
+            String[] parts = raw.split("\\s+");
+            if (parts.length != 12) {
+                System.out.println(color("Please enter exactly 12 integers.", BRIGHT_RED));
+                continue;
+            }
+            try {
+                List<Integer> vals = new ArrayList<>();
+                for (String p : parts) {
+                    int v = Integer.parseInt(p);
+                    vals.add(Math.max(0, v));
+                }
+                data.put(TokenCategory.REGULAR, vals.subList(0, 4));
+                data.put(TokenCategory.WEAPON, vals.subList(4, 8));
+                data.put(TokenCategory.BATTLEPASS, vals.subList(8, 12));
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println(color("One or more entries were not valid integers. Please try again.", BRIGHT_RED));
+            }
         }
     }
 
