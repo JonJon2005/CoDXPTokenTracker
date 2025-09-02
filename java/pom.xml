@@ -17,5 +17,10 @@
       <artifactId>jackson-databind</artifactId>
       <version>2.16.1</version>
     </dependency>
+    <dependency>
+    <groupId>io.javalin</groupId>
+    <artifactId>javalin-bundle</artifactId>
+    <version>5.6.1</version>
+    </dependency>
   </dependencies>
 </project>

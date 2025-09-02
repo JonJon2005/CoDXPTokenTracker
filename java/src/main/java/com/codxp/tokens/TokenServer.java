@@ -54,6 +54,6 @@ public class TokenServer {
             ctx.json(out);
         });
 
-        app.start(7000);
+        app.start(7001);
     }
 }
