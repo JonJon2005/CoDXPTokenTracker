@@ -2,6 +2,7 @@
 # In Java: // File: Main.java (contains public static void main)
 
 import token_lib as tl  # In Java: import static token_lib.*;  // if everything were static helpers
+from typing import Optional
 
 # Optional: better Windows color support (safe if not installed)
 # In Java: // N/A; console coloring differs (e.g., JANSI or platform-specific)
@@ -58,81 +59,109 @@ def display_all(data: dict) -> None:
     print(color("Total hours: ", BRIGHT_WHITE) + f"{grand_minutes/60.0}\n")  # In Java: System.out.println(color("Total hours: ", BRIGHT_WHITE) + (grand_minutes/60.0) + "\n");
 
 # In Java: static int pickCategory(Scanner sc) { ... return 0..2 or -1; }
-def pick_category() -> int:
-    print("\n" + color(BOLD + "Choose token type:", BRIGHT_RED))  # In Java: System.out.println(color("Choose token type:", BRIGHT_RED + BOLD));
-    print("  1) " + color("Regular XP", LIGHT_GREEN))  # In Java: System.out.println("  1) " + color("Regular XP", LIGHT_GREEN));
-    print("  2) " + color("Weapon XP", LIGHT_BLUE))  # In Java: System.out.println("  2) " + color("Weapon XP", LIGHT_BLUE));
-    print("  3) " + color("Battle Pass XP", ORANGE))  # In Java: System.out.println("  3) " + color("Battle Pass XP", ORANGE));
-    s = input(color("Enter option (1-3): ", BRIGHT_WHITE)).strip()  # In Java: String s = sc.nextLine().trim();
-    return {"1": 0, "2": 1, "3": 2}.get(s, -1)  # In Java: return switch (s) { case "1"->0; case "2"->1; case "3"->2; default->-1; };
+def pick_category() -> Optional[int]:
+    while True:
+        print("\n" + color(BOLD + "Choose token type:", BRIGHT_RED))
+        print("  1) " + color("Regular XP", LIGHT_GREEN))
+        print("  2) " + color("Weapon XP", LIGHT_BLUE))
+        print("  3) " + color("Battle Pass XP", ORANGE))
+        s = input(color("Enter option (1-3) or press Enter to cancel: ", BRIGHT_WHITE)).strip()
+        if not s:
+            return None
+        mapping = {"1": 0, "2": 1, "3": 2}
+        if s in mapping:
+            return mapping[s]
+        print(color("Invalid token type. Please try again.", BRIGHT_RED))
 
 # In Java: static void editSingle(Map<String,List<Integer>> data, Scanner sc) { ... }
 def edit_single(data: dict) -> None:
-    ci = pick_category()  # In Java: int ci = pickCategory(sc);
-    if ci == -1:  # In Java: if (ci == -1) { System.out.println("Invalid token type."); return; }
-        print(color("Invalid token type.", BRIGHT_RED))
-        return  # In Java: return;
-    cat = tl.CATEGORIES[ci]  # In Java: String cat = CATEGORIES[ci];
-    tokens = data[cat]  # In Java: List<Integer> tokens = data.get(cat);
-    cat_color = color_for_category(cat)  # In Java: String catColor = colorForCategory(cat);
+    ci = pick_category()
+    if ci is None:
+        print(color("Edit cancelled.", BRIGHT_RED))
+        return
 
-    print("\n" + color("Which duration do you want to edit?", cat_color))  # In Java: System.out.println(color("Which duration do you want to edit?", catColor));
-    print("  1) 15 minutes")  # In Java: System.out.println("  1) 15 minutes");
-    print("  2) 30 minutes")  # In Java: System.out.println("  2) 30 minutes");
-    print("  3) 45 minutes")  # In Java: System.out.println("  3) 45 minutes");
-    print("  4) 60 minutes")  # In Java: System.out.println("  4) 60 minutes");
-    choice = input(color("Enter option (1-4): ", BRIGHT_WHITE)).strip()  # In Java: String choice = sc.nextLine().trim();
-    index_map = {"1": 0, "2": 1, "3": 2, "4": 3}  # In Java: Map<String,Integer> index_map = Map.of("1",0,"2",1,"3",2,"4",3);
-    if choice not in index_map:  # In Java: if (!index_map.containsKey(choice)) { System.out.println("Invalid duration."); return; }
-        print(color("Invalid duration.", BRIGHT_RED))
-        return  # In Java: return;
+    cat = tl.CATEGORIES[ci]
+    tokens = data[cat]
+    cat_color = color_for_category(cat)
 
-    i = index_map[choice]  # In Java: int i = index_map.get(choice);
-    try:  # In Java: try {
-        new_val = int(input(color(f"Enter new token count for {tl.MINUTE_BUCKETS[i]} minutes: ", cat_color)).strip())  # In Java: int new_val = Integer.parseInt(sc.nextLine().trim());
-        if new_val < 0:  # In Java: if (new_val < 0) new_val = 0;
-            new_val = 0  # In Java: new_val = 0;
-        tokens[i] = new_val  # In Java: tokens.set(i, new_val);
-        data[cat] = tokens  # In Java: data.put(cat, tokens);
-    except ValueError:  # In Java: } catch (NumberFormatException e) {
-        print(color("Not a valid integer.", BRIGHT_RED))  # In Java: System.out.println("Not a valid integer.");
+    index_map = {"1": 0, "2": 1, "3": 2, "4": 3}
+    while True:
+        print("\n" + color("Which duration do you want to edit?", cat_color))
+        print("  1) 15 minutes")
+        print("  2) 30 minutes")
+        print("  3) 45 minutes")
+        print("  4) 60 minutes")
+        choice = input(color("Enter option (1-4) or press Enter to cancel: ", BRIGHT_WHITE)).strip()
+        if not choice:
+            print(color("Edit cancelled.", BRIGHT_RED))
+            return
+        if choice in index_map:
+            i = index_map[choice]
+            break
+        print(color("Invalid duration. Please try again.", BRIGHT_RED))
+
+    while True:
+        s = input(color(f"Enter new token count for {tl.MINUTE_BUCKETS[i]} minutes (blank to cancel): ", cat_color)).strip()
+        if not s:
+            print(color("Edit cancelled.", BRIGHT_RED))
+            return
+        try:
+            new_val = int(s)
+            if new_val < 0:
+                new_val = 0
+            tokens[i] = new_val
+            data[cat] = tokens
+            break
+        except ValueError:
+            print(color("Not a valid integer. Please try again.", BRIGHT_RED))
 
 # In Java: static void editAllCategory(Map<String,List<Integer>> data, Scanner sc) { ... }
 def edit_all_category(data: dict) -> None:
-    ci = pick_category()  # In Java: int ci = pickCategory(sc);
-    if ci == -1:  # In Java: if (ci == -1) { System.out.println("Invalid token type."); return; }
-        print(color("Invalid token type.", BRIGHT_RED))
-        return  # In Java: return;
-    cat = tl.CATEGORIES[ci]  # In Java: String cat = CATEGORIES[ci];
-    cat_color = color_for_category(cat)  # In Java: String catColor = colorForCategory(cat);
-    print(color(f"Enter four integers for {cat.capitalize()} (15, 30, 45, 60), separated by spaces.", cat_color))  # In Java: System.out.println(color("Enter four integers for ...", catColor));
-    raw = input(color("Example: 2 3 1 4\n> ", BRIGHT_WHITE)).strip()  # In Java: String raw = sc.nextLine().trim();
-    parts = raw.split()  # In Java: String[] parts = raw.split("\\s+");
-    if len(parts) != 4:  # In Java: if (parts.length != 4) { System.out.println("Please enter exactly four integers."); return; }
-        print(color("Please enter exactly four integers.", BRIGHT_RED))
-        return  # In Java: return;
-    try:  # In Java: try {
-        vals = [max(0, int(p)) for p in parts]  # In Java: List<Integer> vals = Arrays.stream(parts).map(Integer::parseInt).map(v->Math.max(0,v)).toList();
-        data[cat] = vals  # In Java: data.put(cat, vals);
-    except ValueError:  # In Java: } catch (NumberFormatException e) {
-        print(color("One or more entries were not valid integers.", BRIGHT_RED))  # In Java: System.out.println("One or more entries were not valid integers.");
+    ci = pick_category()
+    if ci is None:
+        print(color("Edit cancelled.", BRIGHT_RED))
+        return
+    cat = tl.CATEGORIES[ci]
+    cat_color = color_for_category(cat)
+
+    while True:
+        print(color(f"Enter four integers for {cat.capitalize()} (15, 30, 45, 60), separated by spaces.", cat_color))
+        raw = input(color("Example: 2 3 1 4\n> ", BRIGHT_WHITE)).strip()
+        if not raw:
+            print(color("Edit cancelled.", BRIGHT_RED))
+            return
+        parts = raw.split()
+        if len(parts) != 4:
+            print(color("Please enter exactly four integers.", BRIGHT_RED))
+            continue
+        try:
+            vals = [max(0, int(p)) for p in parts]
+            data[cat] = vals
+            break
+        except ValueError:
+            print(color("One or more entries were not valid integers. Please try again.", BRIGHT_RED))
 
 # In Java: static void editAllCategories(Map<String,List<Integer>> data, Scanner sc) { ... }
 def edit_all_categories(data: dict) -> None:
-    print(color("Enter 12 integers for Regular, Weapon, Battle Pass (each 15,30,45,60).", BRIGHT_RED))  # In Java: System.out.println(color("Enter 12 integers ...", BRIGHT_RED));
-    print("Order: " + color("R15 R30 R45 R60", LIGHT_GREEN) + "  " + color("W15 W30 W45 W60", LIGHT_BLUE) + "  " + color("B15 B30 B45 B60", ORANGE))  # In Java: System.out.println("Order: " + color("R...", LIGHT_GREEN) + ...);
-    raw = input(color("Example: 1 0 2 0  0 1 0 0  3 0 0 1\n> ", BRIGHT_WHITE)).strip()  # In Java: String raw = sc.nextLine().trim();
-    parts = raw.split()  # In Java: String[] parts = raw.split("\\s+");
-    if len(parts) != 12:  # In Java: if (parts.length != 12) { System.out.println("Please enter exactly 12 integers."); return; }
-        print(color("Please enter exactly 12 integers.", BRIGHT_RED))
-        return  # In Java: return;
-    try:  # In Java: try {
-        vals = [max(0, int(p)) for p in parts]  # In Java: List<Integer> vals = Arrays.stream(parts).map(Integer::parseInt).map(v->Math.max(0,v)).toList();
-        data["regular"] = vals[0:4]  # In Java: data.put("regular", vals.subList(0,4));
-        data["weapon"]  = vals[4:8]  # In Java: data.put("weapon", vals.subList(4,8));
-        data["battlepass"] = vals[8:12]  # In Java: data.put("battlepass", vals.subList(8,12));
-    except ValueError:  # In Java: } catch (NumberFormatException e) {
-        print(color("One or more entries were not valid integers.", BRIGHT_RED))  # In Java: System.out.println("One or more entries were not valid integers.");
+    while True:
+        print(color("Enter 12 integers for Regular, Weapon, Battle Pass (each 15,30,45,60).", BRIGHT_RED))
+        print("Order: " + color("R15 R30 R45 R60", LIGHT_GREEN) + "  " + color("W15 W30 W45 W60", LIGHT_BLUE) + "  " + color("B15 B30 B45 B60", ORANGE))
+        raw = input(color("Example: 1 0 2 0  0 1 0 0  3 0 0 1\n> ", BRIGHT_WHITE)).strip()
+        if not raw:
+            print(color("Edit cancelled.", BRIGHT_RED))
+            return
+        parts = raw.split()
+        if len(parts) != 12:
+            print(color("Please enter exactly 12 integers.", BRIGHT_RED))
+            continue
+        try:
+            vals = [max(0, int(p)) for p in parts]
+            data["regular"] = vals[0:4]
+            data["weapon"] = vals[4:8]
+            data["battlepass"] = vals[8:12]
+            break
+        except ValueError:
+            print(color("One or more entries were not valid integers. Please try again.", BRIGHT_RED))
 
 # In Java: static void exportTotalsInteractive(Map<String,List<Integer>> data, Scanner sc) throws IOException { ... }
 def export_totals_interactive(data: dict) -> None:
