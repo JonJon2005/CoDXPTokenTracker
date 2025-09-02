@@ -1,0 +1,6 @@
+=== 2XP Totals Report ===
+Regular: 14205 minutes (236.75 hours)
+Weapon: 7740 minutes (129.00 hours)
+Battlepass: 1965 minutes (32.75 hours)
+
+Grand Total: 23910 minutes (398.50 hours)
