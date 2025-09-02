@@ -5,7 +5,8 @@ XP token data from the backend server and displays the totals for each category.
 
 ## Development
 
-1. Make sure the backend server is running on `http://localhost:5000`.
+1. Make sure the backend server is running on `http://localhost:7001`.
+   If your backend uses a different port, update `vite.config.js` accordingly.
 2. Install dependencies and start the Vite development server:
 
    ```bash
