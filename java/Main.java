@@ -19,25 +19,25 @@ public class Main {
         return c + txt + RESET;
     }
 
-    static String colorForCategory(String cat) {
+    static String colorForCategory(TokenCategory cat) {
         switch (cat) {
-            case "regular":
+            case REGULAR:
                 return LIGHT_GREEN;
-            case "weapon":
+            case WEAPON:
                 return LIGHT_BLUE;
-            case "battlepass":
+            case BATTLEPASS:
                 return ORANGE;
             default:
                 return BRIGHT_WHITE;
         }
     }
 
-    static void displayAll(Map<String, List<Integer>> data) {
+    static void displayAll(Map<TokenCategory, List<Integer>> data) {
         System.out.println(color(BOLD + "=== Current 2XP Tokens ===", BRIGHT_RED));
         int grand = 0;
-        for (String cat : TokenLib.CATEGORIES) {
+        for (TokenCategory cat : TokenCategory.values()) {
             List<Integer> tokens = data.get(cat);
-            String label = Character.toUpperCase(cat.charAt(0)) + cat.substring(1);
+            String label = cat.displayName();
             String catColor = colorForCategory(cat);
             System.out.println("\n" + color(label + ":", catColor));
             for (int i = 0; i < 4; i++) {
@@ -56,7 +56,7 @@ public class Main {
         System.out.println(color("Total hours: ", BRIGHT_WHITE) + (grand / 60.0) + "\n");
     }
 
-    static int pickCategory(Scanner sc) {
+    static TokenCategory pickCategory(Scanner sc) {
         System.out.println("\n" + color(BOLD + "Choose token type:", BRIGHT_RED));
         System.out.println("  1) " + color("Regular XP", LIGHT_GREEN));
         System.out.println("  2) " + color("Weapon XP", LIGHT_BLUE));
@@ -64,23 +64,22 @@ public class Main {
         String s = sc.nextLine().trim();
         switch (s) {
             case "1":
-                return 0;
+                return TokenCategory.REGULAR;
             case "2":
-                return 1;
+                return TokenCategory.WEAPON;
             case "3":
-                return 2;
+                return TokenCategory.BATTLEPASS;
             default:
-                return -1;
+                return null;
         }
     }
 
-    static void editSingle(Map<String, List<Integer>> data, Scanner sc) {
-        int ci = pickCategory(sc);
-        if (ci == -1) {
+    static void editSingle(Map<TokenCategory, List<Integer>> data, Scanner sc) {
+        TokenCategory cat = pickCategory(sc);
+        if (cat == null) {
             System.out.println(color("Invalid token type.", BRIGHT_RED));
             return;
         }
-        String cat = TokenLib.CATEGORIES[ci];
         List<Integer> tokens = data.get(cat);
         String catColor = colorForCategory(cat);
 
@@ -111,15 +110,14 @@ public class Main {
         }
     }
 
-    static void editAllCategory(Map<String, List<Integer>> data, Scanner sc) {
-        int ci = pickCategory(sc);
-        if (ci == -1) {
+    static void editAllCategory(Map<TokenCategory, List<Integer>> data, Scanner sc) {
+        TokenCategory cat = pickCategory(sc);
+        if (cat == null) {
             System.out.println(color("Invalid token type.", BRIGHT_RED));
             return;
         }
-        String cat = TokenLib.CATEGORIES[ci];
         String catColor = colorForCategory(cat);
-        System.out.println(color("Enter four integers for " + Character.toUpperCase(cat.charAt(0)) + cat.substring(1) + " (15, 30, 45, 60), separated by spaces.", catColor));
+        System.out.println(color("Enter four integers for " + cat.displayName() + " (15, 30, 45, 60), separated by spaces.", catColor));
         System.out.print(color("Example: 2 3 1 4\n> ", BRIGHT_WHITE));
         String raw = sc.nextLine().trim();
         String[] parts = raw.split("\\s+");
@@ -139,7 +137,7 @@ public class Main {
         }
     }
 
-    static void editAllCategories(Map<String, List<Integer>> data, Scanner sc) {
+    static void editAllCategories(Map<TokenCategory, List<Integer>> data, Scanner sc) {
         System.out.println(color("Enter 12 integers for Regular, Weapon, Battle Pass (each 15,30,45,60).", BRIGHT_RED));
         System.out.println("Order: " + color("R15 R30 R45 R60", LIGHT_GREEN) + "  " + color("W15 W30 W45 W60", LIGHT_BLUE) + "  " + color("B15 B30 B45 B60", ORANGE));
         System.out.print(color("Example: 1 0 2 0  0 1 0 0  3 0 0 1\n> ", BRIGHT_WHITE));
@@ -155,15 +153,15 @@ public class Main {
                 int v = Integer.parseInt(p);
                 vals.add(Math.max(0, v));
             }
-            data.put("regular", vals.subList(0, 4));
-            data.put("weapon", vals.subList(4, 8));
-            data.put("battlepass", vals.subList(8, 12));
+            data.put(TokenCategory.REGULAR, vals.subList(0, 4));
+            data.put(TokenCategory.WEAPON, vals.subList(4, 8));
+            data.put(TokenCategory.BATTLEPASS, vals.subList(8, 12));
         } catch (NumberFormatException e) {
             System.out.println(color("One or more entries were not valid integers.", BRIGHT_RED));
         }
     }
 
-    static void exportTotalsInteractive(Map<String, List<Integer>> data, Scanner sc) {
+    static void exportTotalsInteractive(Map<TokenCategory, List<Integer>> data, Scanner sc) {
         System.out.print(color("Enter filename to save totals (e.g., totals.txt): ", BRIGHT_WHITE));
         String outName = sc.nextLine().trim();
         if (outName.isEmpty()) {
@@ -196,7 +194,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
-        Map<String, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+        Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
         boolean dirty = false;
         while (true) {
             printMenu();

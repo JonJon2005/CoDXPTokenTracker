@@ -5,7 +5,6 @@ import java.util.*;
 
 public class TokenLib {
     public static final int[] MINUTE_BUCKETS = {15, 30, 45, 60};
-    public static final String[] CATEGORIES = {"regular", "weapon", "battlepass"};
 
     static void ensureFile(String filename) throws IOException {
         Path p = Paths.get(filename);
@@ -27,18 +26,18 @@ public class TokenLib {
         return out;
     }
 
-    public static Map<String, List<Integer>> readAllTokens(String filename) throws IOException {
+    public static Map<TokenCategory, List<Integer>> readAllTokens(String filename) throws IOException {
         ensureFile(filename);
         List<String> raw = Files.readAllLines(Paths.get(filename), StandardCharsets.UTF_8);
-        Map<String, List<Integer>> data = new HashMap<>();
+        Map<TokenCategory, List<Integer>> data = new EnumMap<>(TokenCategory.class);
         if (raw.size() >= 12) {
-            data.put("regular", parseInts(raw.subList(0, 4), 4));
-            data.put("weapon", parseInts(raw.subList(4, 8), 4));
-            data.put("battlepass", parseInts(raw.subList(8, 12), 4));
+            data.put(TokenCategory.REGULAR, parseInts(raw.subList(0, 4), 4));
+            data.put(TokenCategory.WEAPON, parseInts(raw.subList(4, 8), 4));
+            data.put(TokenCategory.BATTLEPASS, parseInts(raw.subList(8, 12), 4));
         } else {
-            data.put("regular", parseInts(raw, 4));
-            data.put("weapon", Arrays.asList(0, 0, 0, 0));
-            data.put("battlepass", Arrays.asList(0, 0, 0, 0));
+            data.put(TokenCategory.REGULAR, parseInts(raw, 4));
+            data.put(TokenCategory.WEAPON, Arrays.asList(0, 0, 0, 0));
+            data.put(TokenCategory.BATTLEPASS, Arrays.asList(0, 0, 0, 0));
         }
         return data;
     }
@@ -51,9 +50,9 @@ public class TokenLib {
         return list;
     }
 
-    public static void writeAllTokens(String filename, Map<String, List<Integer>> data) throws IOException {
+    public static void writeAllTokens(String filename, Map<TokenCategory, List<Integer>> data) throws IOException {
         List<String> out = new ArrayList<>();
-        for (String cat : CATEGORIES) {
+        for (TokenCategory cat : TokenCategory.values()) {
             List<Integer> vals = ensureSize4(data.getOrDefault(cat, Arrays.asList(0, 0, 0, 0)));
             for (Integer v : vals) {
                 out.add(String.valueOf(v));
@@ -73,16 +72,16 @@ public class TokenLib {
         return new AbstractMap.SimpleEntry<>(total, hours);
     }
 
-    public static String buildTotalsReport(Map<String, List<Integer>> data) {
+    public static String buildTotalsReport(Map<TokenCategory, List<Integer>> data) {
         List<String> lines = new ArrayList<>();
         lines.add("=== 2XP Totals Report ===");
         int grand = 0;
-        for (String cat : CATEGORIES) {
+        for (TokenCategory cat : TokenCategory.values()) {
             List<Integer> tokens = data.get(cat);
             AbstractMap.SimpleEntry<Integer, Double> p = computeTotals(tokens);
             int catMinutes = p.getKey();
             double catHours = p.getValue();
-            String label = Character.toUpperCase(cat.charAt(0)) + cat.substring(1);
+            String label = cat.displayName();
             lines.add(label + ": " + catMinutes + " minutes (" + String.format(Locale.US, "%.2f", catHours) + " hours)");
             grand += catMinutes;
         }
