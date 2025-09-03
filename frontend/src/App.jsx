@@ -85,6 +85,11 @@ function App() {
       .catch((err) => setError(err.message))
   }
 
+  const minutesForCategory = (counts) =>
+    counts.reduce((sum, count, idx) => sum + count * minutes[idx], 0)
+
+  const formatMinutes = (m) => `${Math.floor(m / 60)} Hours (${m} Minutes)`
+
   if (error) {
     return <p>Failed to load: {error}</p>
   }
@@ -93,10 +98,16 @@ function App() {
     return <p>Loading...</p>
   }
 
+  const grandTotal = Object.values(tokens).reduce(
+    (sum, counts) => sum + minutesForCategory(counts),
+    0
+  )
+
   return (
     <>
     <img src={codLogo} alt="Call of Duty logo" className="cod-logo" />
       <h1 className="app-title">2XP Tokens</h1>
+      <p className="grand-total">{formatMinutes(grandTotal)}</p>
       <div>
         <button onClick={saveTokens} disabled={!dirty}>
           Save
@@ -112,7 +123,9 @@ function App() {
           </select>
         </label>
       </div>
-      {Object.entries(tokens).map(([category, counts]) => (
+      {Object.entries(tokens).map(([category, counts]) => {
+        const total = minutesForCategory(counts)
+        return (
         <div key={category}>
           <h2 className={`category-title title-${category}`}>
             <img
@@ -122,6 +135,7 @@ function App() {
             />
             {category.charAt(0).toUpperCase() + category.slice(1)}
           </h2>
+          <p className="category-total">{formatMinutes(total)}</p>
           <ul>
             {counts.map((count, idx) => (
               <li key={idx}>
@@ -133,7 +147,7 @@ function App() {
             ))}
           </ul>
         </div>
-      ))}
+      )})}
     </>
   )
 }

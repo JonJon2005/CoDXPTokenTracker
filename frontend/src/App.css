@@ -51,6 +51,11 @@
   margin-bottom: 1rem;
 }
 
+.grand-total,
+.category-total {
+  margin: 0.25rem 0 1rem;
+}
+
 .category-title {
   display: flex;
   align-items: center;
