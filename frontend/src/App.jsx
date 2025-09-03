@@ -6,13 +6,19 @@ function App() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetch('/api/tokens')
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
-      })
-      .then((data) => setTokens(data))
-      .catch((err) => setError(err.message))
+    const fetchTokens = () => {
+      fetch('/api/tokens')
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          return res.json()
+        })
+        .then((data) => setTokens(data))
+        .catch((err) => setError(err.message))
+    }
+
+    fetchTokens()
+    const id = setInterval(fetchTokens, 5000)
+    return () => clearInterval(id)
   }, [])
 
   if (error) {

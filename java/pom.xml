@@ -23,4 +23,17 @@
     <version>5.6.1</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <mainClass>com.codxp.tokens.TokenServer</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

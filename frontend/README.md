@@ -2,6 +2,7 @@
 
 This directory contains a minimal React application powered by Vite. It fetches
 XP token data from the backend server and displays the totals for each category.
+The app automatically refreshes token counts every 5 seconds.
 
 ## Development
 
