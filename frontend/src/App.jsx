@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
+const minutes = [15, 30, 45, 60]
+
 function App() {
   const [tokens, setTokens] = useState(null)
   const [error, setError] = useState(null)
+  const [dirty, setDirty] = useState(false)
+  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
+    if (dirty) return
+
     const fetchTokens = () => {
       fetch('/api/tokens')
         .then((res) => {
@@ -19,7 +25,56 @@ function App() {
     fetchTokens()
     const id = setInterval(fetchTokens, 5000)
     return () => clearInterval(id)
-  }, [])
+  }, [dirty])
+
+  useEffect(() => {
+    document.documentElement.className = theme
+  }, [theme])
+
+  const adjustToken = (category, idx, delta) => {
+    const current = tokens[category][idx]
+    const updatedCount = Math.max(0, current + delta)
+    const updatedTokens = {
+      ...tokens,
+      [category]: tokens[category].map((c, i) => (i === idx ? updatedCount : c)),
+    }
+    setTokens(updatedTokens)
+    setDirty(true)
+  }
+
+  const setToken = (category, idx) => {
+    const input = prompt('Enter number:', tokens[category][idx])
+    if (input === null) return
+    const parsed = Math.max(0, parseInt(input, 10))
+    if (isNaN(parsed)) return
+    const updatedTokens = {
+      ...tokens,
+      [category]: tokens[category].map((c, i) => (i === idx ? parsed : c)),
+    }
+    setTokens(updatedTokens)
+    setDirty(true)
+  }
+
+  const resetTokens = () => {
+    const reset = Object.fromEntries(
+      Object.keys(tokens).map((k) => [k, tokens[k].map(() => 0)])
+    )
+    setTokens(reset)
+    setDirty(true)
+  }
+
+  const saveTokens = () => {
+    fetch('/api/tokens', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokens),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        setDirty(false)
+      })
+      .catch((err) => setError(err.message))
+  }
 
   if (error) {
     return <p>Failed to load: {error}</p>
@@ -29,17 +84,35 @@ function App() {
     return <p>Loading...</p>
   }
 
-  const minutes = [15, 30, 45, 60]
-
   return (
     <>
-      <h1>2XP Tokens</h1>
+      <h1 className="app-title">2XP Tokens</h1>
+      <div>
+        <button onClick={saveTokens} disabled={!dirty}>
+          Save
+        </button>
+        <button onClick={resetTokens}>
+          Reset All
+        </button>
+        <label>
+          Theme:
+          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </div>
       {Object.entries(tokens).map(([category, counts]) => (
         <div key={category}>
-          <h2>{category}</h2>
+          <h2 className={`title-${category}`}>{category}</h2>
           <ul>
             {counts.map((count, idx) => (
-              <li key={idx}>{minutes[idx]} min: {count}</li>
+              <li key={idx}>
+                {minutes[idx]} min: {count}{' '}
+                <button onClick={() => adjustToken(category, idx, -1)}>-</button>
+                <button onClick={() => adjustToken(category, idx, 1)}>+</button>
+                <button onClick={() => setToken(category, idx)}>Enter Number</button>
+              </li>
             ))}
           </ul>
         </div>
@@ -49,3 +122,4 @@ function App() {
 }
 
 export default App
+
