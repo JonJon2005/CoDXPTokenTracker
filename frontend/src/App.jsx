@@ -16,7 +16,7 @@ function App() {
   const [tokens, setTokens] = useState(null)
   const [error, setError] = useState(null)
   const [dirty, setDirty] = useState(false)
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState('dark')
 
   useEffect(() => {
     if (dirty) return
