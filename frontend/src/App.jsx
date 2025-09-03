@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import codLogo from './assets/cod-logo.png'
+import xpRegular from './assets/xp-regular.png'
+import xpWeapon from './assets/xp-weapon.png'
+import xpBattlepass from './assets/xp-battlepass.png'
 
 const minutes = [15, 30, 45, 60]
+const categoryIcons = {
+  regular: xpRegular,
+  weapon: xpWeapon,
+  battlepass: xpBattlepass,
+}
 
 function App() {
   const [tokens, setTokens] = useState(null)
@@ -86,6 +95,7 @@ function App() {
 
   return (
     <>
+    <img src={codLogo} alt="Call of Duty logo" className="cod-logo" />
       <h1 className="app-title">2XP Tokens</h1>
       <div>
         <button onClick={saveTokens} disabled={!dirty}>
@@ -104,7 +114,14 @@ function App() {
       </div>
       {Object.entries(tokens).map(([category, counts]) => (
         <div key={category}>
-          <h2 className={`title-${category}`}>{category}</h2>
+          <h2 className={`category-title title-${category}`}>
+            <img
+              src={categoryIcons[category]}
+              alt={`${category} icon`}
+              className="category-icon"
+            />
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </h2>
           <ul>
             {counts.map((count, idx) => (
               <li key={idx}>

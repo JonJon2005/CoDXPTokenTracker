@@ -45,6 +45,24 @@
   color: #ff5555;
 }
 
+.cod-logo {
+  width: 200px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.category-icon {
+  width: 48px;
+  height: 48px;
+}
+
 .title-regular {
   color: #00ff00;
 }
