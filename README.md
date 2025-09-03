@@ -69,8 +69,10 @@ curl http://localhost:7001/tokens
 
 ## React Frontend
 
-A Vite-powered React app displays token counts and automatically refreshes every
-five seconds.
+A Vite-powered React app displays and edits token counts. It refreshes data every
+five seconds, but polling pauses while you are making edits so local changes are
+not overwritten. Use the on-screen **Save** button to persist your updates back
+to `tokens.txt`.
 
 1. Enter the frontend folder and install dependencies:
    ```bash
