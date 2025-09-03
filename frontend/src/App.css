@@ -90,3 +90,9 @@
 .category {
   flex: 1;
 }
+
+.count {
+  display: inline-block;
+  width: 3ch;
+  text-align: right;
+}

@@ -146,7 +146,7 @@ function App() {
               <ul>
                 {counts.map((count, idx) => (
                   <li key={idx}>
-                    {minutes[idx]} min: {count}{' '}
+                    {minutes[idx]} min: <span className="count">{count}</span>{' '}
                     <button onClick={() => adjustToken(category, idx, -1)}>-</button>
                     <button onClick={() => adjustToken(category, idx, 1)}>+</button>
                     <button onClick={() => setToken(category, idx)}>Enter Number</button>
