@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
 import './App.css'
+import codLogoLight from './assets/cod-logo.png'
+import codLogoDark from './assets/cod-logo2.png'
+import xpRegular from './assets/xp-regular.png'
+import xpWeapon from './assets/xp-weapon.png'
+import xpBattlepass from './assets/xp-battlepass.png'
 
 const minutes = [15, 30, 45, 60]
+const categoryIcons = {
+  regular: xpRegular,
+  weapon: xpWeapon,
+  battlepass: xpBattlepass,
+}
 
 function App() {
   const [tokens, setTokens] = useState(null)
   const [error, setError] = useState(null)
   const [dirty, setDirty] = useState(false)
-  const [theme, setTheme] = useState('light')
+  const [theme, setTheme] = useState('dark')
 
   useEffect(() => {
     if (dirty) return
@@ -76,6 +86,11 @@ function App() {
       .catch((err) => setError(err.message))
   }
 
+  const minutesForCategory = (counts) =>
+    counts.reduce((sum, count, idx) => sum + count * minutes[idx], 0)
+
+  const formatMinutes = (m) => `${Math.floor(m / 60)} Hours (${m} Minutes)`
+
   if (error) {
     return <p>Failed to load: {error}</p>
   }
@@ -84,9 +99,20 @@ function App() {
     return <p>Loading...</p>
   }
 
+  const grandTotal = Object.values(tokens).reduce(
+    (sum, counts) => sum + minutesForCategory(counts),
+    0
+  )
+
   return (
     <>
+    <img
+      src={theme === 'dark' ? codLogoDark : codLogoLight}
+      alt="Call of Duty logo"
+      className="cod-logo"
+    />
       <h1 className="app-title">2XP Tokens</h1>
+      <p className="grand-total">{formatMinutes(grandTotal)}</p>
       <div>
         <button onClick={saveTokens} disabled={!dirty}>
           Save
@@ -102,21 +128,35 @@ function App() {
           </select>
         </label>
       </div>
-      {Object.entries(tokens).map(([category, counts]) => (
-        <div key={category}>
-          <h2 className={`title-${category}`}>{category}</h2>
-          <ul>
-            {counts.map((count, idx) => (
-              <li key={idx}>
-                {minutes[idx]} min: {count}{' '}
-                <button onClick={() => adjustToken(category, idx, -1)}>-</button>
-                <button onClick={() => adjustToken(category, idx, 1)}>+</button>
-                <button onClick={() => setToken(category, idx)}>Enter Number</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <div className="categories">
+        {['regular', 'weapon', 'battlepass'].map((category) => {
+          const counts = tokens[category]
+          const total = minutesForCategory(counts)
+          return (
+            <section key={category} className="category">
+              <h2 className={`category-title title-${category}`}>
+                <img
+                  src={categoryIcons[category]}
+                  alt={`${category} icon`}
+                  className="category-icon"
+                />
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </h2>
+              <p className="category-total">{formatMinutes(total)}</p>
+              <ul>
+                {counts.map((count, idx) => (
+                  <li key={idx}>
+                    {minutes[idx]} min: <span className="count">{count}</span>{' '}
+                    <button onClick={() => adjustToken(category, idx, -1)}>-</button>
+                    <button onClick={() => adjustToken(category, idx, 1)}>+</button>
+                    <button onClick={() => setToken(category, idx)}>Enter Number</button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
     </>
   )
 }

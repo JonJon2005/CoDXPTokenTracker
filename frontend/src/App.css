@@ -45,14 +45,54 @@
   color: #ff5555;
 }
 
+.cod-logo {
+  width: 200px;
+  height: auto;
+  margin-bottom: 1rem;
+}
+
+.grand-total,
+.category-total {
+  margin: 0.25rem 0 1rem;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.category-icon {
+  width: 48px;
+  height: 48px;
+}
+
 .title-regular {
-  color: #00ff00;
+  color: #388f50;
 }
 
 .title-weapon {
-  color: #0000ff;
+  color: #4ebadb;
 }
 
 .title-battlepass {
-  color: #ff8700;
+  color: #d89a39;
+}
+
+.categories {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.category {
+  flex: 1;
+}
+
+.count {
+  display: inline-block;
+  width: 3ch;
+  text-align: right;
 }
