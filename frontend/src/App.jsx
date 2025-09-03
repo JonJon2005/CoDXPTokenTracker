@@ -86,7 +86,7 @@ function App() {
 
   return (
     <>
-      <h1>2XP Tokens</h1>
+      <h1 className="app-title">2XP Tokens</h1>
       <div>
         <button onClick={saveTokens} disabled={!dirty}>
           Save
@@ -104,7 +104,7 @@ function App() {
       </div>
       {Object.entries(tokens).map(([category, counts]) => (
         <div key={category}>
-          <h2>{category}</h2>
+          <h2 className={`title-${category}`}>{category}</h2>
           <ul>
             {counts.map((count, idx) => (
               <li key={idx}>
