@@ -6,7 +6,15 @@ import java.nio.file.*;
 import java.util.*;
 
 public class Main {
-    static final String FILENAME = "../tokens.txt";
+    static final String FILENAME = resolveTokensFile();
+
+    private static String resolveTokensFile() {
+        Path p = Paths.get("tokens.txt");
+        if (!Files.exists(p)) {
+            p = Paths.get("../tokens.txt");
+        }
+        return p.toString();
+    }
 
     static final String RESET = "\u001B[0m";
     static final String BOLD = "\u001B[1m";

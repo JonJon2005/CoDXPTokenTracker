@@ -5,10 +5,19 @@ import io.javalin.http.HttpStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.nio.file.*;
 import java.util.*;
 
 public class TokenServer {
-    private static final String FILENAME = "../tokens.txt";
+    private static final String FILENAME = resolveTokensFile();
+
+    private static String resolveTokensFile() {
+        Path p = Paths.get("tokens.txt");
+        if (!Files.exists(p)) {
+            p = Paths.get("../tokens.txt");
+        }
+        return p.toString();
+    }
 
     public static void main(String[] args) {
         ObjectMapper mapper = new ObjectMapper();
