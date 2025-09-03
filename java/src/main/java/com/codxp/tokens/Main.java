@@ -1,10 +1,12 @@
+package com.codxp.tokens;
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
 public class Main {
-    static final String FILENAME = "tokens.txt";
+    static final String FILENAME = "../tokens.txt";
 
     static final String RESET = "\u001B[0m";
     static final String BOLD = "\u001B[1m";

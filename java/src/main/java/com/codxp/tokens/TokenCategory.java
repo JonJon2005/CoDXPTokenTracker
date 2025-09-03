@@ -1,3 +1,5 @@
+package com.codxp.tokens;
+
 public enum TokenCategory {
     REGULAR("regular"),
     WEAPON("weapon"),
