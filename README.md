@@ -1,114 +1,50 @@
 # CoDXPTokenTracker
 
-CoDXPTokenTracker is a cross-language playground for managing Call of Duty double XP tokens.
-It includes:
+A small playground for tracking Call of Duty Double XP tokens. The project demonstrates the same token logic implemented in multiple languages:
 
-- **Python CLI** for direct manipulation of token data.
-- **Java REST server** that exposes token data over HTTP.
-- **React front end** (Vite) that consumes the REST API and displays current totals.
+- **Python CLI** – interactive terminal editor.
+- **Java REST API** – HTTP service used by the frontend.
+- **React frontend** – dashboard that consumes the API and lets you adjust counts.
 
-All components share a simple text file, `tokens.txt`, located in the repository root.
-The file contains 12 lines representing counts of 15, 30, 45, and 60 minute tokens for
-each category: Regular, Weapon, and Battle Pass.
+All components share a text file named `tokens.txt` in the repository root. The file has 12 integers describing counts of 15, 30, 45 and 60 minute tokens for each category (Regular, Weapon and Battle Pass). If it doesn't exist, the tools will create it with zeros.
 
-## Prerequisites
+## Setup
 
-| Component | Requirements |
-|-----------|-------------|
-| Python    | Python 3.8+, optionally `colorama` for colored output (\`pip install colorama\`). |
-| Java      | JDK 17+, Apache Maven 3.8+. |
-| Frontend  | Node.js 20+, npm 10+. |
-
-Ensure `tokens.txt` exists in the repository root. If it does not, the utilities will
-create one with zeros.
-
-## Python Command-Line Tool
-
-1. Navigate to the Python directory:
-   ```bash
-   cd python
-   ```
-2. (Optional) Install the color library for better Windows support:
-   ```bash
-   pip install colorama
-   ```
-3. Run the CLI:
-   ```bash
-   python main.py
-   ```
-   The tool lets you view, edit, and export token totals interactively. Edits are
-   saved back to `../tokens.txt`.
-
-## Java REST Backend
-
-The Java implementation exposes token data as JSON and is used by the frontend.
-
-1. Move into the Java project:
+1. **Clone the repository** and open a terminal in its root directory.
+2. **Prerequisites**
+   - Python 3.8+
+   - JDK 17+ and Apache Maven 3.8+
+   - Node.js 20+ and npm 10+
+   - (Optional) `pip install colorama` for better Windows terminal colours.
+3. **Start the Java backend**
    ```bash
    cd java
-   ```
-2. Start the server with Maven:
-   ```bash
    mvn exec:java
    ```
-   The server listens on `http://localhost:7001` and uses `../tokens.txt` for
-   storage.
-
-### Available Endpoints
-
-| Method | Path      | Description |
-|--------|-----------|-------------|
-| GET    | `/tokens` | Returns token counts for each category. |
-| PUT    | `/tokens` | Replaces token counts using a JSON body matching the GET structure. |
-| GET    | `/totals` | Returns computed minute and hour totals per category and overall. |
-
-Example request to view tokens:
-```bash
-curl http://localhost:7001/tokens
-```
-
-## React Frontend
-
-A Vite-powered React app displays token counts and automatically refreshes every
-five seconds. Adjust counts with the `+`/`-` buttons and click **Save** to write
-changes back to `tokens.txt`. Auto-refresh is paused while you have unsaved edits.
-
-1. Enter the frontend folder and install dependencies:
+   The server runs on `http://localhost:7001` and reads `../tokens.txt`.
+4. **Start the React frontend** in a second terminal
    ```bash
    cd frontend
    npm install
-   ```
-2. Start the development server:
-   ```bash
    npm run dev
    ```
-   By default, Vite serves on `http://localhost:5173` and proxies any request that
-   begins with `/api` to `http://localhost:7001`. The proxy configuration lives in
-   `vite.config.js`.
+   Vite serves the app on `http://localhost:5173` and proxies `/api/*` requests to the backend.
+5. **Use the Python CLI** (optional) for direct editing
+   ```bash
+   cd python
+   python main.py
+   ```
+   Any changes are written back to `../tokens.txt`.
 
-3. In a browser, open the printed URL (usually `http://localhost:5173`) to view the
-   token dashboard.
+## Repository Layout
 
-## Using Python or Java Backend Interchangeably
-
-The Python CLI and Java server share the same business logic and file format. You can
-choose whichever implementation fits your workflow:
-
-- Use the **Python CLI** for quick interactive edits directly from the terminal.
-- Run the **Java server** when you need an HTTP API (required for the React frontend).
-
-Both implementations operate on `tokens.txt`, so changes made by one are immediately
-visible to the other.
-
-## Development Tips
-
-- Keep `tokens.txt` under version control if you want to track history of your token
-  counts.
-- The frontend's `npm run lint` script checks React source files with ESLint.
-- The Java project uses Maven; run `mvn test` or `mvn package` for additional
-  validation or to produce a runnable JAR.
+| Path       | Description                     |
+|------------|---------------------------------|
+| `tokens.txt` | Shared token storage file.     |
+| `python/`  | Command-line interface.         |
+| `java/`    | REST API server (Javalin).      |
+| `frontend/`| React dashboard powered by Vite.|
 
 ## License
 
-This project is provided for instructional purposes. Adjust and extend it as needed
-for personal use.
+Provided for educational use. Modify and extend as desired.

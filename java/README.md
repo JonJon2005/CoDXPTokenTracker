@@ -1,14 +1,28 @@
 # Java Token Server
 
-This module provides a REST API for managing token counts.
+REST API built with [Javalin](https://javalin.io/) that exposes XP token data stored in `../tokens.txt`.
 
-## Running the server
+## Run
 
 From the repository root:
-
 ```bash
 cd java
 mvn exec:java
 ```
+The server listens on `http://localhost:7001` and will create `../tokens.txt` with zeros if it does not exist.
 
-The server starts on http://localhost:7001 and reads its data from `tokens.txt` in the repository root.
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/tokens` | Return token counts for each category. |
+| PUT | `/tokens` | Replace token counts using a JSON body matching the GET format. |
+| GET | `/totals` | Return total minutes and hours per category and overall. |
+
+## Build
+
+To create a runnable JAR:
+```bash
+mvn package
+java -jar target/token-server-0.1.0.jar
+```
