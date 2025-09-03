@@ -128,31 +128,37 @@ function App() {
           </select>
         </label>
       </div>
-      {Object.entries(tokens).map(([category, counts]) => {
-        const total = minutesForCategory(counts)
-        return (
-        <div key={category}>
-          <h2 className={`category-title title-${category}`}>
-            <img
-              src={categoryIcons[category]}
-              alt={`${category} icon`}
-              className="category-icon"
-            />
-            {category.charAt(0).toUpperCase() + category.slice(1)}
-          </h2>
-          <p className="category-total">{formatMinutes(total)}</p>
-          <ul>
-            {counts.map((count, idx) => (
-              <li key={idx}>
-                {minutes[idx]} min: {count}{' '}
-                <button onClick={() => adjustToken(category, idx, -1)}>-</button>
-                <button onClick={() => adjustToken(category, idx, 1)}>+</button>
-                <button onClick={() => setToken(category, idx)}>Enter Number</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )})}
+      <div className="categories">
+        {['regular', 'weapon', 'battlepass'].map((category) => {
+          const counts = tokens[category]
+          const total = minutesForCategory(counts)
+          return (
+            <section key={category} className="category">
+              <h2 className={`category-title title-${category}`}>
+                <img
+                  src={categoryIcons[category]}
+                  alt={`${category} icon`}
+                  className="category-icon"
+                />
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </h2>
+              <p className="category-total">{formatMinutes(total)}</p>
+              <ul>
+                {counts.map((count, idx) => (
+                  <li key={idx}>
+                    {minutes[idx]} min:
+                    {' '}
+                    <span className="token-count">{count}</span>{' '}
+                    <button onClick={() => adjustToken(category, idx, -1)}>-</button>
+                    <button onClick={() => adjustToken(category, idx, 1)}>+</button>
+                    <button onClick={() => setToken(category, idx)}>Enter Number</button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
     </>
   )
 }

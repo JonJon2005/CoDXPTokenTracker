@@ -79,3 +79,20 @@
 .title-battlepass {
   color: #d89a39;
 }
+
+.categories {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.category {
+  flex: 1;
+}
+
+.token-count {
+  display: inline-block;
+  width: 3ch;
+  text-align: right;
+}
