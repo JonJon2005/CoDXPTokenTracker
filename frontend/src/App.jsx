@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import codLogo from './assets/cod-logo.png'
+import codLogoLight from './assets/cod-logo.png'
+import codLogoDark from './assets/cod-logo2.png'
 import xpRegular from './assets/xp-regular.png'
 import xpWeapon from './assets/xp-weapon.png'
 import xpBattlepass from './assets/xp-battlepass.png'
@@ -105,7 +106,11 @@ function App() {
 
   return (
     <>
-    <img src={codLogo} alt="Call of Duty logo" className="cod-logo" />
+    <img
+      src={theme === 'dark' ? codLogoDark : codLogoLight}
+      alt="Call of Duty logo"
+      className="cod-logo"
+    />
       <h1 className="app-title">2XP Tokens</h1>
       <p className="grand-total">{formatMinutes(grandTotal)}</p>
       <div>
