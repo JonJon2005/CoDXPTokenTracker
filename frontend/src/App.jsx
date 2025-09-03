@@ -7,6 +7,7 @@ function App() {
   const [tokens, setTokens] = useState(null)
   const [error, setError] = useState(null)
   const [dirty, setDirty] = useState(false)
+  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     if (dirty) return
@@ -26,6 +27,10 @@ function App() {
     return () => clearInterval(id)
   }, [dirty])
 
+  useEffect(() => {
+    document.documentElement.className = theme
+  }, [theme])
+
   const adjustToken = (category, idx, delta) => {
     const current = tokens[category][idx]
     const updatedCount = Math.max(0, current + delta)
@@ -34,6 +39,27 @@ function App() {
       [category]: tokens[category].map((c, i) => (i === idx ? updatedCount : c)),
     }
     setTokens(updatedTokens)
+    setDirty(true)
+  }
+
+  const setToken = (category, idx) => {
+    const input = prompt('Enter number:', tokens[category][idx])
+    if (input === null) return
+    const parsed = Math.max(0, parseInt(input, 10))
+    if (isNaN(parsed)) return
+    const updatedTokens = {
+      ...tokens,
+      [category]: tokens[category].map((c, i) => (i === idx ? parsed : c)),
+    }
+    setTokens(updatedTokens)
+    setDirty(true)
+  }
+
+  const resetTokens = () => {
+    const reset = Object.fromEntries(
+      Object.keys(tokens).map((k) => [k, tokens[k].map(() => 0)])
+    )
+    setTokens(reset)
     setDirty(true)
   }
 
@@ -61,9 +87,21 @@ function App() {
   return (
     <>
       <h1>2XP Tokens</h1>
-      <button onClick={saveTokens} disabled={!dirty}>
-        Save
-      </button>
+      <div>
+        <button onClick={saveTokens} disabled={!dirty}>
+          Save
+        </button>
+        <button onClick={resetTokens}>
+          Reset All
+        </button>
+        <label>
+          Theme:
+          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </div>
       {Object.entries(tokens).map(([category, counts]) => (
         <div key={category}>
           <h2>{category}</h2>
@@ -73,6 +111,7 @@ function App() {
                 {minutes[idx]} min: {count}{' '}
                 <button onClick={() => adjustToken(category, idx, -1)}>-</button>
                 <button onClick={() => adjustToken(category, idx, 1)}>+</button>
+                <button onClick={() => setToken(category, idx)}>Enter Number</button>
               </li>
             ))}
           </ul>
