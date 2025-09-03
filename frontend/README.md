@@ -1,22 +1,24 @@
-# CoDXPTokenTracker Frontend
+# Frontend
 
-This directory contains a minimal React application powered by Vite. It fetches
-XP token data from the backend server and displays the totals for each category.
-The app automatically refreshes token counts every 5 seconds when there are no
-unsaved edits. Adjust token values with the `+`/`-` buttons and click **Save** to
-persist changes.
+React app built with Vite that displays and updates XP token counts through the Java API.
 
 ## Development
 
-1. Make sure the backend server is running on `http://localhost:7001`.
-   If your backend uses a different port, update `vite.config.js` accordingly.
-2. Install dependencies and start the Vite development server:
-
+1. Ensure the backend server is running on `http://localhost:7001`.
+2. Install dependencies and start the dev server:
    ```bash
    npm install
    npm run dev
    ```
+   The site is served on `http://localhost:5173`. Requests beginning with `/api` are proxied to the backend.
 
-Requests beginning with `/api` are proxied to the backend, so the React app can
-call endpoints such as `/api/tokens` without worrying about CORS during local
-development.
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite in development mode. |
+| `npm run build` | Create a production build in `dist/`. |
+| `npm run preview` | Preview the production build locally. |
+| `npm run lint` | Run ESLint on the source files. |
+
+Use the `+`/`-` buttons in the UI to change counts and **Save** to persist them to `tokens.txt`.
