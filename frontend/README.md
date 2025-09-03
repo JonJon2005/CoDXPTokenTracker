@@ -2,7 +2,9 @@
 
 This directory contains a minimal React application powered by Vite. It fetches
 XP token data from the backend server and displays the totals for each category.
-The app automatically refreshes token counts every 5 seconds.
+The app automatically refreshes token counts every 5 seconds when there are no
+unsaved edits. Adjust token values with the `+`/`-` buttons and click **Save** to
+persist changes.
 
 ## Development
 
