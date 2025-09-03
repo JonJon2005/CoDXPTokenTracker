@@ -6,8 +6,11 @@ const minutes = [15, 30, 45, 60]
 function App() {
   const [tokens, setTokens] = useState(null)
   const [error, setError] = useState(null)
+  const [dirty, setDirty] = useState(false)
 
   useEffect(() => {
+    if (dirty) return
+
     const fetchTokens = () => {
       fetch('/api/tokens')
         .then((res) => {
@@ -21,7 +24,7 @@ function App() {
     fetchTokens()
     const id = setInterval(fetchTokens, 5000)
     return () => clearInterval(id)
-  }, [])
+  }, [dirty])
 
   const adjustToken = (category, idx, delta) => {
     const current = tokens[category][idx]
@@ -31,11 +34,20 @@ function App() {
       [category]: tokens[category].map((c, i) => (i === idx ? updatedCount : c)),
     }
     setTokens(updatedTokens)
+    setDirty(true)
+  }
+
+  const saveTokens = () => {
     fetch('/api/tokens', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedTokens),
-    }).catch(() => {})
+      body: JSON.stringify(tokens),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        setDirty(false)
+      })
+      .catch((err) => setError(err.message))
   }
 
   if (error) {
@@ -49,6 +61,9 @@ function App() {
   return (
     <>
       <h1>2XP Tokens</h1>
+      <button onClick={saveTokens} disabled={!dirty}>
+        Save
+      </button>
       {Object.entries(tokens).map(([category, counts]) => (
         <div key={category}>
           <h2>{category}</h2>
