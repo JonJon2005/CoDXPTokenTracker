@@ -63,10 +63,12 @@ button:focus-visible {
 
 html.light button {
   background-color: #f9f9f9;
+  color: #000000;
 }
 
 html.dark button {
   background-color: #1a1a1a;
+  color: #ffffff;
 }
 
 @media (prefers-color-scheme: light) {
