@@ -16,6 +16,12 @@ All components share a text file named `tokens.txt` in the repository root. The 
    - JDK 17+ and Apache Maven 3.8+
    - Node.js 20+ and npm 10+
    - (Optional) `pip install colorama` for better Windows terminal colours.
+
+For a one-command startup, use the provided scripts to launch both the backend and frontend:
+
+- macOS: `./start-mac.sh`
+- Windows: `start-windows.bat`
+
 3. **Start the Java backend**
    ```bash
    cd java
