@@ -66,9 +66,43 @@ public class TokenServer {
             }
         });
 
+        app.get("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
+                return;
+            }
+            ctx.json(UserService.getProfile(username));
+        });
+
+        app.put("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
+                return;
+            }
+            Map<String, Object> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String codName = Objects.toString(in.get("cod_username"), "");
+            String prestige = Objects.toString(in.get("prestige"), "");
+            int level = 1;
+            Object lvlObj = in.get("level");
+            if (lvlObj instanceof Number) {
+                level = ((Number) lvlObj).intValue();
+            } else if (lvlObj instanceof String) {
+                try {
+                    level = Integer.parseInt((String) lvlObj);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            level = Math.min(1000, Math.max(1, level));
+            UserService.updateProfile(username, codName, prestige, level);
+            ctx.status(HttpStatus.NO_CONTENT);
+        });
+
         app.get("/tokens", ctx -> {
             String username = ctx.attribute("username");
             if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
                 return;
             }
             Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
@@ -80,6 +114,7 @@ public class TokenServer {
         app.put("/tokens", ctx -> {
             String username = ctx.attribute("username");
             if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
                 return;
             }
             Map<String, List<Integer>> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
@@ -95,6 +130,7 @@ public class TokenServer {
         app.get("/totals", ctx -> {
             String username = ctx.attribute("username");
             if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
                 return;
             }
             Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
