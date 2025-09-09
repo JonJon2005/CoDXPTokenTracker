@@ -75,13 +75,13 @@ public class TokenServer {
             String oldPw = body.get("oldPassword");
             String newPw = body.get("newPassword");
             if (oldPw == null || newPw == null) {
-                ctx.status(HttpStatus.BAD_REQUEST);
+                ctx.status(HttpStatus.BAD_REQUEST).result("Missing fields");
                 return;
             }
             if (UserService.changePassword(username, oldPw, newPw)) {
                 ctx.status(HttpStatus.NO_CONTENT);
             } else {
-                ctx.status(HttpStatus.UNAUTHORIZED);
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Old password doesn't match");
             }
         });
 

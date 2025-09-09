@@ -18,8 +18,11 @@ export default function ChangePassword({ authToken, onClose }) {
       },
       body: JSON.stringify({ oldPassword, newPassword }),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to change password')
+      .then(async (res) => {
+        if (!res.ok) {
+          const msg = await res.text()
+          throw new Error(msg || 'Failed to change password')
+        }
         setSuccess(true)
         setOldPassword('')
         setNewPassword('')
