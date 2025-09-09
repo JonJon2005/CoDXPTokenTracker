@@ -75,6 +75,31 @@ public class UserService {
         }
     }
 
+    public static boolean changePassword(String username, String oldPassword, String newPassword) throws IOException {
+        Path userPath = userFile(username);
+        if (!Files.exists(userPath)) {
+            return false;
+        }
+        Map<String, Object> obj;
+        try (InputStream in = Files.newInputStream(userPath)) {
+            obj = MAPPER.readValue(in, new TypeReference<>() {});
+        }
+        Object hashObj = obj.get("password_hash");
+        if (!(hashObj instanceof String)) {
+            return false;
+        }
+        String hash = (String) hashObj;
+        if (!BCrypt.checkpw(oldPassword, hash)) {
+            return false;
+        }
+        String newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+        obj.put("password_hash", newHash);
+        try (OutputStream out = Files.newOutputStream(userPath)) {
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(out, obj);
+        }
+        return true;
+    }
+
     public static String issueToken(String username) {
         Date expiry = Date.from(Instant.now().plus(TOKEN_TTL));
         return Jwts.builder()

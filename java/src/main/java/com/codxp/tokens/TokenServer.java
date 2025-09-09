@@ -66,6 +66,25 @@ public class TokenServer {
             }
         });
 
+        app.post("/change-password", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            Map<String, String> body = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String oldPw = body.get("oldPassword");
+            String newPw = body.get("newPassword");
+            if (oldPw == null || newPw == null) {
+                ctx.status(HttpStatus.BAD_REQUEST);
+                return;
+            }
+            if (UserService.changePassword(username, oldPw, newPw)) {
+                ctx.status(HttpStatus.NO_CONTENT);
+            } else {
+                ctx.status(HttpStatus.UNAUTHORIZED);
+            }
+        });
+
         app.get("/tokens", ctx -> {
             String username = ctx.attribute("username");
             if (username == null) {

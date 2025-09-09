@@ -5,8 +5,10 @@ import codLogoDark from './assets/cod-logo2.png'
 import xpRegular from './assets/xp-regular.png'
 import xpWeapon from './assets/xp-weapon.png'
 import xpBattlepass from './assets/xp-battlepass.png'
+import accountIcon from './assets/account.svg'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
+import ChangePassword from './ChangePassword.jsx'
 
 const minutes = [15, 30, 45, 60]
 const categoryIcons = {
@@ -22,6 +24,8 @@ function App() {
   const [theme, setTheme] = useState('dark')
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token'))
   const [showRegister, setShowRegister] = useState(false)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
 
   const handleAuth = (t) => {
     localStorage.setItem('token', t)
@@ -150,11 +154,36 @@ function App() {
 
   return (
     <>
-    <img
-      src={theme === 'dark' ? codLogoDark : codLogoLight}
-      alt="Call of Duty logo"
-      className="cod-logo"
-    />
+      <img
+        src={accountIcon}
+        alt="Account"
+        className="account-icon"
+        onClick={() => setShowAccountMenu((m) => !m)}
+      />
+      {showAccountMenu && (
+        <div className="account-menu">
+          <button
+            onClick={() => {
+              setShowChangePassword(true)
+              setShowAccountMenu(false)
+            }}
+          >
+            Change Password
+          </button>
+          <button onClick={logout}>Logout</button>
+        </div>
+      )}
+      {showChangePassword && (
+        <ChangePassword
+          authToken={authToken}
+          onClose={() => setShowChangePassword(false)}
+        />
+      )}
+      <img
+        src={theme === 'dark' ? codLogoDark : codLogoLight}
+        alt="Call of Duty logo"
+        className="cod-logo"
+      />
       <h1 className="app-title">2XP Tokens</h1>
       <p className="grand-total">{formatMinutes(grandTotal)}</p>
       <div>
@@ -162,7 +191,6 @@ function App() {
           Save
         </button>
         <button onClick={resetTokens}>Reset All</button>
-        <button onClick={logout}>Logout</button>
         <label>
           Theme:
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
