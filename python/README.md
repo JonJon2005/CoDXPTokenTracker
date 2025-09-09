@@ -6,6 +6,7 @@ Interactive terminal tool for viewing and editing XP token counts stored in `../
 
 ```bash
 cd python
+pip install -r requirements.txt  # install bcrypt and optional tools
 python main.py
 ```
 Optionally install `colorama` for better colour support on Windows:

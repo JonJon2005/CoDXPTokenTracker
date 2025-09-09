@@ -7,6 +7,7 @@ import java.util.*;
 
 public class Main {
     static final String FILENAME = resolveTokensFile();
+    static final String USERNAME = "default";
 
     private static String resolveTokensFile() {
         Path p = Paths.get("tokens.txt");
@@ -245,7 +246,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
-        Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+        Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME, USERNAME);
         boolean dirty = false;
         while (true) {
             printMenu();
@@ -263,11 +264,11 @@ public class Main {
                 editAllCategories(data, sc);
                 dirty = true;
             } else if ("5".equals(choice)) {
-                TokenLib.writeAllTokens(FILENAME, data);
+                TokenLib.writeAllTokens(FILENAME, USERNAME, data);
                 dirty = false;
                 System.out.println(color("Saved.\n", LIGHT_GREEN));
             } else if ("6".equals(choice)) {
-                TokenLib.writeAllTokens(FILENAME, data);
+                TokenLib.writeAllTokens(FILENAME, USERNAME, data);
                 System.out.println(color("Saved. Exiting...", LIGHT_GREEN));
                 break;
             } else if ("7".equals(choice)) {

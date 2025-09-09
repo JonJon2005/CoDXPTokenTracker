@@ -2,6 +2,8 @@
 # In Java: // File: token_lib.java (conceptually a utility class with static methods)
 
 import os
+import json
+import bcrypt
 # In Java: import java.nio.file.*; import java.io.*;  // for Files.exists, etc.
 
 from typing import List, Dict, Tuple
@@ -12,6 +14,12 @@ MINUTE_BUCKETS = [15, 30, 45, 60]
 
 CATEGORIES = ["regular", "weapon", "battlepass"]
 # In Java: final static String[] CATEGORIES = {"regular", "weapon", "battlepass"};
+
+
+def _user_file(filename: str, username: str) -> str:
+    """Return path to the per-user JSON file relative to the legacy tokens file."""
+    base_dir = os.path.join(os.path.dirname(filename) or ".", "data", "users")
+    return os.path.join(base_dir, f"{username}.json")
 
 def ensure_file(filename: str) -> None:
     # In Java: static void ensureFile(String filename) throws IOException { if (!Files.exists(Paths.get(filename))) Files.write(Paths.get(filename), Collections.nCopies(12, "0")); }
@@ -36,8 +44,8 @@ def _parse_ints(lines: List[str], n: int) -> List[int]:
     return out
     # In Java: return out;
 
-def read_all_tokens(filename: str) -> Dict[str, List[int]]:
-    # In Java: static Map<String,List<Integer>> readAllTokens(String filename) throws IOException { ... }
+def _read_legacy_tokens(filename: str) -> Dict[str, List[int]]:
+    # In Java: static Map<String,List<Integer>> readLegacyTokens(String filename) throws IOException { ... }
     ensure_file(filename)
     # In Java: ensureFile(filename);
     with open(filename, "r") as f:
@@ -64,8 +72,9 @@ def read_all_tokens(filename: str) -> Dict[str, List[int]]:
     return data
     # In Java: return data;
 
-def write_all_tokens(filename: str, data: Dict[str, List[int]]) -> None:
-    # In Java: static void writeAllTokens(String filename, Map<String,List<Integer>> data) throws IOException { ... }
+
+def _write_legacy_tokens(filename: str, data: Dict[str, List[int]]) -> None:
+    # In Java: static void writeLegacyTokens(String filename, Map<String,List<Integer>> data) throws IOException { ... }
     out_lines: List[str] = []
     # In Java: List<String> out = new ArrayList<>(12);
     for cat in CATEGORIES:
@@ -78,6 +87,79 @@ def write_all_tokens(filename: str, data: Dict[str, List[int]]) -> None:
     with open(filename, "w") as f:
         # In Java: Files.write(Paths.get(filename), out, StandardCharsets.UTF_8);
         f.write("\n".join(out_lines) + "\n")
+
+
+def register_user(filename: str, username: str, password: str) -> bool:
+    """Create a new user with a bcrypt-hashed password."""
+    user_path = _user_file(filename, username)
+    if os.path.exists(user_path):
+        return False
+    os.makedirs(os.path.dirname(user_path), exist_ok=True)
+    pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    out_obj = {"password_hash": pw_hash, "tokens": {}}
+    for cat in CATEGORIES:
+        out_obj["tokens"][cat] = [0, 0, 0, 0]
+    with open(user_path, "w") as f:
+        json.dump(out_obj, f, indent=2)
+    return True
+
+
+def authenticate_user(filename: str, username: str, password: str) -> bool:
+    """Validate supplied credentials against stored bcrypt hash."""
+    user_path = _user_file(filename, username)
+    if not os.path.exists(user_path):
+        return False
+    try:
+        with open(user_path, "r") as f:
+            obj = json.load(f)
+    except Exception:
+        return False
+    hash_val = obj.get("password_hash")
+    if not isinstance(hash_val, str) or not hash_val:
+        return False
+    return bcrypt.checkpw(password.encode(), hash_val.encode())
+
+
+def read_all_tokens(filename: str, username: str) -> Dict[str, List[int]]:
+    """Read tokens for the given user; fall back to legacy tokens.txt."""
+    user_path = _user_file(filename, username)
+    if os.path.exists(user_path):
+        try:
+            with open(user_path, "r") as f:
+                obj = json.load(f)
+        except Exception:
+            obj = {}
+        tokens_obj = obj.get("tokens", {})
+        data: Dict[str, List[int]] = {}
+        for cat in CATEGORIES:
+            vals = tokens_obj.get(cat, [0, 0, 0, 0])
+            vals = (list(vals) + [0, 0, 0, 0])[:4]
+            data[cat] = [int(v) for v in vals]
+        return data
+    return _read_legacy_tokens(filename)
+
+
+def write_all_tokens(filename: str, username: str, data: Dict[str, List[int]]) -> None:
+    """Write tokens for the given user; legacy file for default user."""
+    user_path = _user_file(filename, username)
+    if username == "default" and not os.path.exists(user_path):
+        _write_legacy_tokens(filename, data)
+        return
+    os.makedirs(os.path.dirname(user_path), exist_ok=True)
+    password_hash = ""
+    if os.path.exists(user_path):
+        try:
+            with open(user_path, "r") as f:
+                obj = json.load(f)
+                password_hash = obj.get("password_hash", "")
+        except Exception:
+            pass
+    out_obj = {"password_hash": password_hash, "tokens": {}}
+    for cat in CATEGORIES:
+        vals = (data.get(cat, [0, 0, 0, 0]) + [0, 0, 0, 0])[:4]
+        out_obj["tokens"][cat] = [int(v) for v in vals]
+    with open(user_path, "w") as f:
+        json.dump(out_obj, f, indent=2)
 
 def compute_totals(tokens: List[int]) -> Tuple[int, float]:
     # In Java: static Pair<Integer,Double> computeTotals(List<Integer> tokens) { int total = 0; for (int i=0;i<4;i++) total += tokens.get(i)*MINUTE_BUCKETS[i]; double hours = total/60.0; return new Pair<>(total, hours); }

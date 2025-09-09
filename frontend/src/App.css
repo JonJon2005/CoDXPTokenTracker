@@ -96,3 +96,47 @@
   width: 3ch;
   text-align: right;
 }
+
+.account-icon {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.account-menu {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  z-index: 10;
+}
+
+html.dark .account-menu {
+  background: #242424;
+  border-color: #444;
+}
+
+.error {
+  color: #ff5555;
+}
+
+.user-bar {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: bold;
+}
+
+.user-level.master {
+  color: orange;
+}

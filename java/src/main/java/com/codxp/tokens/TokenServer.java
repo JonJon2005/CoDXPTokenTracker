@@ -2,21 +2,20 @@ package com.codxp.tokens;
 
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
+import io.javalin.http.Context;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.nio.file.*;
 import java.util.*;
 
 public class TokenServer {
-    private static final String FILENAME = resolveTokensFile();
-
-    private static String resolveTokensFile() {
-        Path p = Paths.get("tokens.txt");
-        if (!Files.exists(p)) {
-            p = Paths.get("../tokens.txt");
+    private static String requireUser(Context ctx) {
+        String auth = ctx.header("Authorization");
+        if (auth == null || !auth.startsWith("Bearer ")) {
+            return null;
         }
-        return p.toString();
+        String token = auth.substring(7);
+        return UserService.verifyToken(token);
     }
 
     public static void main(String[] args) {
@@ -25,26 +24,111 @@ public class TokenServer {
             config.plugins.enableCors(cors -> cors.add(it -> it.anyHost()));
         });
 
+        Set<String> openPaths = Set.of("/login", "/register");
+        app.before(ctx -> {
+            if (openPaths.contains(ctx.path())) {
+                return;
+            }
+            String username = requireUser(ctx);
+            if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
+            } else {
+                ctx.attribute("username", username);
+            }
+        });
+
+        app.post("/register", ctx -> {
+            Map<String, String> creds = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String username = creds.get("username");
+            String password = creds.get("password");
+            if (username == null || password == null) {
+                ctx.status(HttpStatus.BAD_REQUEST);
+                return;
+            }
+            boolean ok = UserService.register(username, password);
+            if (ok) {
+                String token = UserService.issueToken(username);
+                ctx.status(HttpStatus.CREATED).json(Map.of("token", token));
+            } else {
+                ctx.status(HttpStatus.CONFLICT);
+            }
+        });
+
+        app.post("/login", ctx -> {
+            Map<String, String> creds = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String username = creds.get("username");
+            String password = creds.get("password");
+            if (username != null && password != null && UserService.validate(username, password)) {
+                String token = UserService.issueToken(username);
+                ctx.json(Map.of("token", token));
+            } else {
+                ctx.status(HttpStatus.UNAUTHORIZED);
+            }
+        });
+
+        app.get("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            ctx.json(UserService.getProfile(username));
+        });
+
+        app.put("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            Map<String, Object> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String codName = Objects.toString(in.get("cod_username"), "");
+            String prestige = Objects.toString(in.get("prestige"), "");
+            int level = 1;
+            Object lvlObj = in.get("level");
+            if (lvlObj instanceof Number) {
+                level = ((Number) lvlObj).intValue();
+            } else if (lvlObj instanceof String) {
+                try {
+                    level = Integer.parseInt((String) lvlObj);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            level = Math.min(1000, Math.max(1, level));
+            UserService.updateProfile(username, codName, prestige, level);
+            ctx.status(HttpStatus.NO_CONTENT);
+        });
+
         app.get("/tokens", ctx -> {
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
             Map<String, List<Integer>> out = new LinkedHashMap<>();
             data.forEach((k, v) -> out.put(k.key(), v));
             ctx.json(out);
         });
 
         app.put("/tokens", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
             Map<String, List<Integer>> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
             Map<TokenCategory, List<Integer>> data = new EnumMap<>(TokenCategory.class);
             in.forEach((k, v) -> {
                 TokenCategory cat = TokenCategory.valueOf(k.toUpperCase());
                 data.put(cat, v);
             });
-            TokenLib.writeAllTokens(FILENAME, data);
+            TokenLib.writeAllTokens(UserService.getTokensFile(), username, data);
             ctx.status(HttpStatus.NO_CONTENT);
         });
 
         app.get("/totals", ctx -> {
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
             Map<String, Object> out = new LinkedHashMap<>();
             int grand = 0;
             for (TokenCategory cat : TokenCategory.values()) {
