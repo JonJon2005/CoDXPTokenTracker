@@ -5,8 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class TokenLib {
     public static final int[] MINUTE_BUCKETS = {15, 30, 45, 60};
+
+    private static Path userFile(String filename, String username) {
+        Path base = Paths.get(filename).getParent();
+        if (base == null) base = Paths.get(".");
+        return base.resolve("data").resolve("users").resolve(username + ".json");
+    }
 
     static void ensureFile(String filename) throws IOException {
         Path p = Paths.get(filename);
@@ -28,7 +37,7 @@ public class TokenLib {
         return out;
     }
 
-    public static Map<TokenCategory, List<Integer>> readAllTokens(String filename) throws IOException {
+    private static Map<TokenCategory, List<Integer>> readLegacyTokens(String filename) throws IOException {
         ensureFile(filename);
         List<String> raw = Files.readAllLines(Paths.get(filename), StandardCharsets.UTF_8);
         Map<TokenCategory, List<Integer>> data = new EnumMap<>(TokenCategory.class);
@@ -52,7 +61,7 @@ public class TokenLib {
         return list;
     }
 
-    public static void writeAllTokens(String filename, Map<TokenCategory, List<Integer>> data) throws IOException {
+    private static void writeLegacyTokens(String filename, Map<TokenCategory, List<Integer>> data) throws IOException {
         List<String> out = new ArrayList<>();
         for (TokenCategory cat : TokenCategory.values()) {
             List<Integer> vals = ensureSize4(data.getOrDefault(cat, Arrays.asList(0, 0, 0, 0)));
@@ -61,6 +70,52 @@ public class TokenLib {
             }
         }
         Files.write(Paths.get(filename), out, StandardCharsets.UTF_8);
+    }
+
+    public static Map<TokenCategory, List<Integer>> readAllTokens(String filename, String username) throws IOException {
+        Path userPath = userFile(filename, username);
+        if (Files.exists(userPath)) {
+            ObjectMapper mapper = new ObjectMapper();
+            try (InputStream in = Files.newInputStream(userPath)) {
+                Map<String, Object> obj = mapper.readValue(in, new TypeReference<>() {});
+                Map<String, List<Integer>> tokens = (Map<String, List<Integer>>) obj.getOrDefault("tokens", Collections.emptyMap());
+                Map<TokenCategory, List<Integer>> data = new EnumMap<>(TokenCategory.class);
+                for (TokenCategory cat : TokenCategory.values()) {
+                    List<Integer> vals = tokens.getOrDefault(cat.key(), Arrays.asList(0, 0, 0, 0));
+                    data.put(cat, ensureSize4(vals));
+                }
+                return data;
+            }
+        }
+        return readLegacyTokens(filename);
+    }
+
+    public static void writeAllTokens(String filename, String username, Map<TokenCategory, List<Integer>> data) throws IOException {
+        Path userPath = userFile(filename, username);
+        if ("default".equals(username) && !Files.exists(userPath)) {
+            writeLegacyTokens(filename, data);
+            return;
+        }
+        Files.createDirectories(userPath.getParent());
+        ObjectMapper mapper = new ObjectMapper();
+        String hash = "";
+        if (Files.exists(userPath)) {
+            try (InputStream in = Files.newInputStream(userPath)) {
+                Map<String, Object> obj = mapper.readValue(in, new TypeReference<>() {});
+                Object ph = obj.get("password_hash");
+                if (ph instanceof String) hash = (String) ph;
+            }
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("password_hash", hash);
+        Map<String, List<Integer>> tokens = new LinkedHashMap<>();
+        for (TokenCategory cat : TokenCategory.values()) {
+            tokens.put(cat.key(), ensureSize4(data.getOrDefault(cat, Arrays.asList(0, 0, 0, 0))));
+        }
+        out.put("tokens", tokens);
+        try (OutputStream os = Files.newOutputStream(userPath)) {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(os, out);
+        }
     }
 
     public static AbstractMap.SimpleEntry<Integer, Double> computeTotals(List<Integer> tokens) {
