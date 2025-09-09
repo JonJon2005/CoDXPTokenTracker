@@ -6,7 +6,7 @@ A small playground for tracking Call of Duty Double XP tokens. The project demon
 - **Java REST API** – HTTP service used by the frontend.
 - **React frontend** – dashboard that consumes the API and lets you adjust counts.
 
-The frontend includes an account menu (top-right icon) where users can change their password or log out.
+The frontend includes an account menu (top-right icon) where users can log out.
 
 Tokens are stored per-user as JSON files under `data/users/<username>.json`. Each file contains a hashed password and token counts. If no user file exists, the tools fall back to the legacy `tokens.txt` in the repository root.
 
