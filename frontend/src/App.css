@@ -96,3 +96,68 @@
   width: 3ch;
   text-align: right;
 }
+
+.account-icon {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.account-menu {
+  position: fixed;
+  top: 4rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  z-index: 10;
+}
+
+html.dark .account-menu {
+  background: #242424;
+  border-color: #444;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.change-password-form {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+html.dark .change-password-form {
+  background: #1a1a1a;
+}
+
+.change-password-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.error {
+  color: #ff5555;
+}
+
+.success {
+  color: #388f50;
+}
