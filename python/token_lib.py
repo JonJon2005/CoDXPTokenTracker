@@ -3,6 +3,7 @@
 
 import os
 import json
+import bcrypt
 # In Java: import java.nio.file.*; import java.io.*;  // for Files.exists, etc.
 
 from typing import List, Dict, Tuple
@@ -86,6 +87,37 @@ def _write_legacy_tokens(filename: str, data: Dict[str, List[int]]) -> None:
     with open(filename, "w") as f:
         # In Java: Files.write(Paths.get(filename), out, StandardCharsets.UTF_8);
         f.write("\n".join(out_lines) + "\n")
+
+
+def register_user(filename: str, username: str, password: str) -> bool:
+    """Create a new user with a bcrypt-hashed password."""
+    user_path = _user_file(filename, username)
+    if os.path.exists(user_path):
+        return False
+    os.makedirs(os.path.dirname(user_path), exist_ok=True)
+    pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    out_obj = {"password_hash": pw_hash, "tokens": {}}
+    for cat in CATEGORIES:
+        out_obj["tokens"][cat] = [0, 0, 0, 0]
+    with open(user_path, "w") as f:
+        json.dump(out_obj, f, indent=2)
+    return True
+
+
+def authenticate_user(filename: str, username: str, password: str) -> bool:
+    """Validate supplied credentials against stored bcrypt hash."""
+    user_path = _user_file(filename, username)
+    if not os.path.exists(user_path):
+        return False
+    try:
+        with open(user_path, "r") as f:
+            obj = json.load(f)
+    except Exception:
+        return False
+    hash_val = obj.get("password_hash")
+    if not isinstance(hash_val, str) or not hash_val:
+        return False
+    return bcrypt.checkpw(password.encode(), hash_val.encode())
 
 
 def read_all_tokens(filename: str, username: str) -> Dict[str, List[int]]:

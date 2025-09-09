@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
 import java.security.Key;
+import java.time.*;
 import java.util.*;
 
 /**
@@ -22,6 +23,7 @@ public class UserService {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String TOKENS_FILE = resolveTokensFile();
     private static final Key KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static final Duration TOKEN_TTL = Duration.ofHours(1);
 
     private static Path userFile(String username) {
         Path base = Paths.get(TOKENS_FILE).getParent();
@@ -74,7 +76,12 @@ public class UserService {
     }
 
     public static String issueToken(String username) {
-        return Jwts.builder().setSubject(username).signWith(KEY).compact();
+        Date expiry = Date.from(Instant.now().plus(TOKEN_TTL));
+        return Jwts.builder()
+                .setSubject(username)
+                .setExpiration(expiry)
+                .signWith(KEY)
+                .compact();
     }
 
     public static String verifyToken(String token) {
