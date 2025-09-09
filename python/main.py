@@ -13,6 +13,7 @@ except Exception:
     pass  # In Java: // ignore
 
 FILENAME = "tokens.txt"  # In Java: final static String FILENAME = "tokens.txt";
+USERNAME = "default"  # In Java: final static String USERNAME = "default";
 
 # === ANSI color helpers ===
 # In Java: // Define constants for ANSI color codes (or use a library like JANSI)
@@ -193,7 +194,7 @@ def print_menu() -> None:
 
 # In Java: public static void main(String[] args) throws Exception { ... }
 def main() -> None:
-    data = tl.read_all_tokens(FILENAME)  # In Java: Map<String,List<Integer>> data = readAllTokens(FILENAME);
+    data = tl.read_all_tokens(FILENAME, USERNAME)  # In Java: Map<String,List<Integer>> data = readAllTokens(FILENAME, USERNAME);
     dirty = False  # In Java: boolean dirty = false;
     while True:  # In Java: while (true) {
         print_menu()  # In Java: printMenu();
@@ -210,11 +211,11 @@ def main() -> None:
             edit_all_categories(data)  # In Java: editAllCategories(data, sc);
             dirty = True  # In Java: dirty = true;
         elif choice == "5":  # In Java: } else if ("5".equals(choice)) {
-            tl.write_all_tokens(FILENAME, data)  # In Java: writeAllTokens(FILENAME, data);
+            tl.write_all_tokens(FILENAME, USERNAME, data)  # In Java: writeAllTokens(FILENAME, USERNAME, data);
             dirty = False  # In Java: dirty = false;
             print(color("Saved.\n", LIGHT_GREEN))  # In Java: System.out.println(color("Saved.\n", LIGHT_GREEN));
         elif choice == "6":  # In Java: } else if ("6".equals(choice)) {
-            tl.write_all_tokens(FILENAME, data)  # In Java: writeAllTokens(FILENAME, data);
+            tl.write_all_tokens(FILENAME, USERNAME, data)  # In Java: writeAllTokens(FILENAME, USERNAME, data);
             print(color("Saved. Exiting...", LIGHT_GREEN))  # In Java: System.out.println(color("Saved. Exiting...", LIGHT_GREEN));
             break  # In Java: break;
         elif choice == "7":  # In Java: } else if ("7".equals(choice)) {

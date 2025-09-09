@@ -6,7 +6,7 @@ A small playground for tracking Call of Duty Double XP tokens. The project demon
 - **Java REST API** – HTTP service used by the frontend.
 - **React frontend** – dashboard that consumes the API and lets you adjust counts.
 
-All components share a text file named `tokens.txt` in the repository root. The file has 12 integers describing counts of 15, 30, 45 and 60 minute tokens for each category (Regular, Weapon and Battle Pass). If it doesn't exist, the tools will create it with zeros.
+Tokens are stored per-user as JSON files under `data/users/<username>.json`. Each file contains a hashed password and token counts. If no user file exists, the tools fall back to the legacy `tokens.txt` in the repository root.
 
 ## Setup
 
@@ -27,7 +27,7 @@ For a one-command startup, use the provided scripts to launch both the backend a
    cd java
    mvn exec:java
    ```
-   The server runs on `http://localhost:7001` and reads `../tokens.txt`.
+   The server runs on `http://localhost:7001` and reads user data from `../data/users/` (falling back to `../tokens.txt`).
 4. **Start the React frontend** in a second terminal
    ```bash
    cd frontend
@@ -40,13 +40,14 @@ For a one-command startup, use the provided scripts to launch both the backend a
    cd python
    python main.py
    ```
-   Any changes are written back to `../tokens.txt`.
+   Any changes are written back to the user’s JSON file or, for the default account, `../tokens.txt`.
 
 ## Repository Layout
 
 | Path       | Description                     |
 |------------|---------------------------------|
-| `tokens.txt` | Shared token storage file.     |
+| `data/users/` | Per-user JSON token storage. |
+| `tokens.txt` | Legacy default token file.    |
 | `python/`  | Command-line interface.         |
 | `java/`    | REST API server (Javalin).      |
 | `frontend/`| React dashboard powered by Vite.|

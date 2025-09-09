@@ -10,6 +10,7 @@ import java.util.*;
 
 public class TokenServer {
     private static final String FILENAME = resolveTokensFile();
+    private static final String USERNAME = "default";
 
     private static String resolveTokensFile() {
         Path p = Paths.get("tokens.txt");
@@ -26,7 +27,7 @@ public class TokenServer {
         });
 
         app.get("/tokens", ctx -> {
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME, USERNAME);
             Map<String, List<Integer>> out = new LinkedHashMap<>();
             data.forEach((k, v) -> out.put(k.key(), v));
             ctx.json(out);
@@ -39,12 +40,12 @@ public class TokenServer {
                 TokenCategory cat = TokenCategory.valueOf(k.toUpperCase());
                 data.put(cat, v);
             });
-            TokenLib.writeAllTokens(FILENAME, data);
+            TokenLib.writeAllTokens(FILENAME, USERNAME, data);
             ctx.status(HttpStatus.NO_CONTENT);
         });
 
         app.get("/totals", ctx -> {
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME);
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(FILENAME, USERNAME);
             Map<String, Object> out = new LinkedHashMap<>();
             int grand = 0;
             for (TokenCategory cat : TokenCategory.values()) {
