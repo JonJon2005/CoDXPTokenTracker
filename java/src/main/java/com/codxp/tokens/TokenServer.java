@@ -47,7 +47,8 @@ public class TokenServer {
             }
             boolean ok = UserService.register(username, password);
             if (ok) {
-                ctx.status(HttpStatus.CREATED);
+                String token = UserService.issueToken(username);
+                ctx.status(HttpStatus.CREATED).json(Map.of("token", token));
             } else {
                 ctx.status(HttpStatus.CONFLICT);
             }
