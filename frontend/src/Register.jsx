@@ -12,15 +12,19 @@ export default function Register({ onAuth, switchToLogin }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.ok) throw new Error('Registration failed')
-        return res.json()
+        try {
+          return await res.json()
+        } catch {
+          return {}
+        }
       })
       .then((data) => {
         if (data.token) {
           onAuth(data.token)
         } else {
-          throw new Error('No token returned')
+          switchToLogin()
         }
       })
       .catch((err) => setError(err.message))
