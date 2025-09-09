@@ -53,6 +53,10 @@ public class UserService {
             tokens.put(cat.key(), Arrays.asList(0, 0, 0, 0));
         }
         data.put("tokens", tokens);
+        // default profile data
+        data.put("cod_username", "");
+        data.put("prestige", "");
+        data.put("level", 1);
         try (OutputStream out = Files.newOutputStream(userPath)) {
             MAPPER.writerWithDefaultPrettyPrinter().writeValue(out, data);
         }
@@ -95,5 +99,34 @@ public class UserService {
 
     public static String getTokensFile() {
         return TOKENS_FILE;
+    }
+
+    /** Read profile information for the given user. */
+    public static Map<String, Object> getProfile(String username) throws IOException {
+        Path userPath = userFile(username);
+        Map<String, Object> obj;
+        try (InputStream in = Files.newInputStream(userPath)) {
+            obj = MAPPER.readValue(in, new TypeReference<>() {});
+        }
+        Map<String, Object> profile = new LinkedHashMap<>();
+        profile.put("cod_username", obj.getOrDefault("cod_username", ""));
+        profile.put("prestige", obj.getOrDefault("prestige", ""));
+        profile.put("level", obj.getOrDefault("level", 1));
+        return profile;
+    }
+
+    /** Update profile information for the given user. */
+    public static void updateProfile(String username, String codUsername, String prestige, int level) throws IOException {
+        Path userPath = userFile(username);
+        Map<String, Object> obj;
+        try (InputStream in = Files.newInputStream(userPath)) {
+            obj = MAPPER.readValue(in, new TypeReference<>() {});
+        }
+        obj.put("cod_username", codUsername);
+        obj.put("prestige", prestige);
+        obj.put("level", level);
+        try (OutputStream out = Files.newOutputStream(userPath)) {
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(out, obj);
+        }
     }
 }

@@ -127,3 +127,16 @@ html.dark .account-menu {
 .error {
   color: #ff5555;
 }
+
+.user-bar {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  font-weight: bold;
+}
+
+.user-level.master {
+  color: orange;
+}

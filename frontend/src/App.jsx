@@ -24,6 +24,11 @@ function App() {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token'))
   const [showRegister, setShowRegister] = useState(false)
   const [showAccountMenu, setShowAccountMenu] = useState(false)
+  const [profile, setProfile] = useState({
+    cod_username: '',
+    prestige: '',
+    level: 1,
+  })
 
   const handleAuth = (t) => {
     localStorage.setItem('token', t)
@@ -36,6 +41,7 @@ function App() {
     setTokens(null)
     setDirty(false)
     setError(null)
+    setProfile({ cod_username: '', prestige: '', level: 1 })
   }, [])
 
   useEffect(() => {
@@ -65,6 +71,21 @@ function App() {
   useEffect(() => {
     document.documentElement.className = theme
   }, [theme])
+
+  useEffect(() => {
+    if (!authToken) return
+    fetch('/api/profile', { headers: { Authorization: `Bearer ${authToken}` } })
+      .then((res) => {
+        if (res.status === 401) {
+          logout()
+          throw new Error('Unauthorized')
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then((data) => setProfile(data))
+      .catch((err) => setError(err.message))
+  }, [authToken, logout])
 
   const adjustToken = (category, idx, delta) => {
     const current = tokens[category][idx]
@@ -123,6 +144,25 @@ function App() {
 
   const formatMinutes = (m) => `${Math.floor(m / 60)} Hours (${m} Minutes)`
 
+  const saveProfile = () => {
+    fetch('/api/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(profile),
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          logout()
+          throw new Error('Unauthorized')
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      })
+      .catch((err) => setError(err.message))
+  }
+
   if (!authToken) {
     return showRegister ? (
       <Register
@@ -152,6 +192,19 @@ function App() {
 
   return (
     <>
+      <div className="user-bar">
+        <span>{profile.cod_username}</span>{' '}
+        <span>{profile.prestige}</span>{' '}
+        <span
+          className={`user-level${
+            profile.prestige?.toLowerCase().includes('master')
+              ? ' master'
+              : ''
+          }`}
+        >
+          {profile.level}
+        </span>
+      </div>
       <img
         src={accountIcon}
         alt="Account"
@@ -160,6 +213,37 @@ function App() {
       />
       {showAccountMenu && (
         <div className="account-menu">
+          <label>
+            CoD Username
+            <input
+              value={profile.cod_username}
+              onChange={(e) =>
+                setProfile({ ...profile, cod_username: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Prestige
+            <input
+              value={profile.prestige}
+              onChange={(e) =>
+                setProfile({ ...profile, prestige: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Level
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              value={profile.level}
+              onChange={(e) =>
+                setProfile({ ...profile, level: parseInt(e.target.value, 10) })
+              }
+            />
+          </label>
+          <button onClick={saveProfile}>Save</button>
           <button onClick={logout}>Logout</button>
         </div>
       )}

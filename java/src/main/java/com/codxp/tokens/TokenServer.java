@@ -66,6 +66,37 @@ public class TokenServer {
             }
         });
 
+        app.get("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            ctx.json(UserService.getProfile(username));
+        });
+
+        app.put("/profile", ctx -> {
+            String username = ctx.attribute("username");
+            if (username == null) {
+                return;
+            }
+            Map<String, Object> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
+            String codName = Objects.toString(in.get("cod_username"), "");
+            String prestige = Objects.toString(in.get("prestige"), "");
+            int level = 1;
+            Object lvlObj = in.get("level");
+            if (lvlObj instanceof Number) {
+                level = ((Number) lvlObj).intValue();
+            } else if (lvlObj instanceof String) {
+                try {
+                    level = Integer.parseInt((String) lvlObj);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            level = Math.min(1000, Math.max(1, level));
+            UserService.updateProfile(username, codName, prestige, level);
+            ctx.status(HttpStatus.NO_CONTENT);
+        });
+
         app.get("/tokens", ctx -> {
             String username = ctx.attribute("username");
             if (username == null) {
