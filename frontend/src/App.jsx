@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import codLogoLight from './assets/cod-logo.png'
 import codLogoDark from './assets/cod-logo2.png'
 import xpRegular from './assets/xp-regular.png'
 import xpWeapon from './assets/xp-weapon.png'
 import xpBattlepass from './assets/xp-battlepass.png'
+import Login from './Login.jsx'
+import Register from './Register.jsx'
 
 const minutes = [15, 30, 45, 60]
 const categoryIcons = {
@@ -18,13 +20,34 @@ function App() {
   const [error, setError] = useState(null)
   const [dirty, setDirty] = useState(false)
   const [theme, setTheme] = useState('dark')
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('token'))
+  const [showRegister, setShowRegister] = useState(false)
+
+  const handleAuth = (t) => {
+    localStorage.setItem('token', t)
+    setAuthToken(t)
+  }
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token')
+    setAuthToken(null)
+    setTokens(null)
+    setDirty(false)
+    setError(null)
+  }, [])
 
   useEffect(() => {
-    if (dirty) return
+    if (dirty || !authToken) return
 
     const fetchTokens = () => {
-      fetch('/api/tokens')
+      fetch('/api/tokens', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
         .then((res) => {
+          if (res.status === 401) {
+            logout()
+            throw new Error('Unauthorized')
+          }
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
           return res.json()
         })
@@ -35,7 +58,7 @@ function App() {
     fetchTokens()
     const id = setInterval(fetchTokens, 5000)
     return () => clearInterval(id)
-  }, [dirty])
+  }, [dirty, authToken, logout])
 
   useEffect(() => {
     document.documentElement.className = theme
@@ -76,10 +99,17 @@ function App() {
   const saveTokens = () => {
     fetch('/api/tokens', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
       body: JSON.stringify(tokens),
     })
       .then((res) => {
+        if (res.status === 401) {
+          logout()
+          throw new Error('Unauthorized')
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         setDirty(false)
       })
@@ -90,6 +120,20 @@ function App() {
     counts.reduce((sum, count, idx) => sum + count * minutes[idx], 0)
 
   const formatMinutes = (m) => `${Math.floor(m / 60)} Hours (${m} Minutes)`
+
+  if (!authToken) {
+    return showRegister ? (
+      <Register
+        onAuth={handleAuth}
+        switchToLogin={() => setShowRegister(false)}
+      />
+    ) : (
+      <Login
+        onAuth={handleAuth}
+        switchToRegister={() => setShowRegister(true)}
+      />
+    )
+  }
 
   if (error) {
     return <p>Failed to load: {error}</p>
@@ -117,9 +161,8 @@ function App() {
         <button onClick={saveTokens} disabled={!dirty}>
           Save
         </button>
-        <button onClick={resetTokens}>
-          Reset All
-        </button>
+        <button onClick={resetTokens}>Reset All</button>
+        <button onClick={logout}>Logout</button>
         <label>
           Theme:
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
