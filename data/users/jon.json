@@ -1,0 +1,8 @@
+{
+  "password_hash" : "$2a$10$Ys98zA3a.1yHuHkkXDgqX.StYC1B00b6Aq6BFfI2Fh0Sxj7hr4YUO",
+  "tokens" : {
+    "regular" : [ 66, 81, 25, 167 ],
+    "weapon" : [ 13, 50, 35, 81 ],
+    "battlepass" : [ 17, 11, 8, 22 ]
+  }
+}
