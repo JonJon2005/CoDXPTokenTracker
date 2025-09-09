@@ -8,7 +8,6 @@ import xpBattlepass from './assets/xp-battlepass.png'
 import accountIcon from './assets/account.svg'
 import Login from './Login.jsx'
 import Register from './Register.jsx'
-import ChangePassword from './ChangePassword.jsx'
 
 const minutes = [15, 30, 45, 60]
 const categoryIcons = {
@@ -25,7 +24,6 @@ function App() {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token'))
   const [showRegister, setShowRegister] = useState(false)
   const [showAccountMenu, setShowAccountMenu] = useState(false)
-  const [showChangePassword, setShowChangePassword] = useState(false)
 
   const handleAuth = (t) => {
     localStorage.setItem('token', t)
@@ -162,22 +160,8 @@ function App() {
       />
       {showAccountMenu && (
         <div className="account-menu">
-          <button
-            onClick={() => {
-              setShowChangePassword(true)
-              setShowAccountMenu(false)
-            }}
-          >
-            Change Password
-          </button>
           <button onClick={logout}>Logout</button>
         </div>
-      )}
-      {showChangePassword && (
-        <ChangePassword
-          authToken={authToken}
-          onClose={() => setShowChangePassword(false)}
-        />
       )}
       <img
         src={theme === 'dark' ? codLogoDark : codLogoLight}
