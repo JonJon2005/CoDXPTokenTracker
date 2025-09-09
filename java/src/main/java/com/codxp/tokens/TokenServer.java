@@ -24,6 +24,19 @@ public class TokenServer {
             config.plugins.enableCors(cors -> cors.add(it -> it.anyHost()));
         });
 
+        Set<String> openPaths = Set.of("/login", "/register");
+        app.before(ctx -> {
+            if (openPaths.contains(ctx.path())) {
+                return;
+            }
+            String username = requireUser(ctx);
+            if (username == null) {
+                ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
+            } else {
+                ctx.attribute("username", username);
+            }
+        });
+
         app.post("/register", ctx -> {
             Map<String, String> creds = mapper.readValue(ctx.body(), new TypeReference<>() {});
             String username = creds.get("username");
@@ -53,9 +66,8 @@ public class TokenServer {
         });
 
         app.get("/tokens", ctx -> {
-            String username = requireUser(ctx);
+            String username = ctx.attribute("username");
             if (username == null) {
-                ctx.status(HttpStatus.UNAUTHORIZED);
                 return;
             }
             Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
@@ -65,9 +77,8 @@ public class TokenServer {
         });
 
         app.put("/tokens", ctx -> {
-            String username = requireUser(ctx);
+            String username = ctx.attribute("username");
             if (username == null) {
-                ctx.status(HttpStatus.UNAUTHORIZED);
                 return;
             }
             Map<String, List<Integer>> in = mapper.readValue(ctx.body(), new TypeReference<>() {});
@@ -81,9 +92,8 @@ public class TokenServer {
         });
 
         app.get("/totals", ctx -> {
-            String username = requireUser(ctx);
+            String username = ctx.attribute("username");
             if (username == null) {
-                ctx.status(HttpStatus.UNAUTHORIZED);
                 return;
             }
             Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
