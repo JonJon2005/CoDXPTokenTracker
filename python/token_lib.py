@@ -1,202 +1,171 @@
 # token_lib.py
-# In Java: // File: token_lib.java (conceptually a utility class with static methods)
+# Shared helpers for manipulating XP token data.
 
 import os
-import json
-import bcrypt
-# In Java: import java.nio.file.*; import java.io.*;  // for Files.exists, etc.
+from typing import Any, Dict, List, Tuple, Optional
 
-from typing import List, Dict, Tuple
-# In Java: import java.util.*;  // for List, Map, etc.
+import bcrypt
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.errors import DuplicateKeyError
 
 MINUTE_BUCKETS = [15, 30, 45, 60]
-# In Java: final static int[] MINUTE_BUCKETS = {15, 30, 45, 60};
-
 CATEGORIES = ["regular", "weapon", "battlepass"]
-# In Java: final static String[] CATEGORIES = {"regular", "weapon", "battlepass"};
+
+MONGO_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+MONGO_DB = os.environ.get("MONGODB_DATABASE", "codxp_tokens")
+MONGO_COLLECTION = os.environ.get("MONGODB_USERS_COLLECTION", "users")
+
+_USERS_COLLECTION: Optional[Collection] = None
 
 
-def _user_file(filename: str, username: str) -> str:
-    """Return path to the per-user JSON file relative to the legacy tokens file."""
-    base_dir = os.path.join(os.path.dirname(filename) or ".", "data", "users")
-    return os.path.join(base_dir, f"{username}.json")
-
-def ensure_file(filename: str) -> None:
-    # In Java: static void ensureFile(String filename) throws IOException { if (!Files.exists(Paths.get(filename))) Files.write(Paths.get(filename), Collections.nCopies(12, "0")); }
-    if not os.path.exists(filename):
-        # In Java: if (!Files.exists(Paths.get(filename))) { Files.write(Paths.get(filename), Collections.nCopies(12, "0")); }
-        with open(filename, "w") as f:
-            # In Java: try (BufferedWriter bw = Files.newBufferedWriter(Paths.get(filename))) { for (int i=0;i<12;i++) { bw.write("0"); bw.newLine(); } }
-            f.write(("0\n" * 12))
-
-def _parse_ints(lines: List[str], n: int) -> List[int]:
-    # In Java: static List<Integer> parseInts(List<String> lines, int n) { var out = new ArrayList<Integer>(); for (int i=0;i<n;i++){ try{ out.add(Integer.parseInt(lines.get(i).trim())); } catch(Exception e){ out.add(0);} } return out; }
-    out: List[int] = []
-    # In Java: List<Integer> out = new ArrayList<>();
-    for i in range(n):
-        # In Java: for (int i=0; i<n; i++) {
+def _get_users_collection() -> Collection:
+    """Return the MongoDB collection storing user documents."""
+    global _USERS_COLLECTION
+    if _USERS_COLLECTION is None:
+        client = MongoClient(MONGO_URI)
+        collection = client[MONGO_DB][MONGO_COLLECTION]
         try:
-            # In Java: out.add(Integer.parseInt(lines.get(i).trim()));
-            out.append(int(lines[i].strip()))
-        except Exception:
-            # In Java: } catch (Exception e) { out.add(0); }
-            out.append(0)
+            collection.create_index("username", unique=True)
+        except Exception as exc:  # pragma: no cover - configuration error
+            raise RuntimeError("Unable to initialise MongoDB user collection") from exc
+        _USERS_COLLECTION = collection
+    return _USERS_COLLECTION
+
+
+def _default_tokens() -> Dict[str, List[int]]:
+    return {cat: [0, 0, 0, 0] for cat in CATEGORIES}
+
+
+def _default_profile() -> Dict[str, object]:
+    return {"cod_username": "", "prestige": "", "level": 1}
+
+
+def _to_int(value: Any) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except ValueError:
+            return 0
+    return 0
+
+
+def _ensure_size4(values: Any) -> List[int]:
+    out = [0, 0, 0, 0]
+    if isinstance(values, (list, tuple)):
+        limit = min(4, len(values))
+        for i in range(limit):
+            out[i] = max(0, _to_int(values[i]))
     return out
-    # In Java: return out;
-
-def _read_legacy_tokens(filename: str) -> Dict[str, List[int]]:
-    # In Java: static Map<String,List<Integer>> readLegacyTokens(String filename) throws IOException { ... }
-    ensure_file(filename)
-    # In Java: ensureFile(filename);
-    with open(filename, "r") as f:
-        # In Java: List<String> raw = Files.readAllLines(Paths.get(filename));
-        raw = [line.strip() for line in f.readlines()]
-    data: Dict[str, List[int]] = {}
-    # In Java: Map<String,List<Integer>> data = new HashMap<>();
-    if len(raw) >= 12:
-        # In Java: if (raw.size() >= 12) {
-        data["regular"] = _parse_ints(raw[0:4], 4)
-        # In Java: data.put("regular", parseInts(raw.subList(0,4), 4));
-        data["weapon"] = _parse_ints(raw[4:8], 4)
-        # In Java: data.put("weapon", parseInts(raw.subList(4,8), 4));
-        data["battlepass"] = _parse_ints(raw[8:12], 4)
-        # In Java: data.put("battlepass", parseInts(raw.subList(8,12), 4));
-    else:
-        # In Java: } else {
-        data["regular"] = _parse_ints(raw, 4)
-        # In Java: data.put("regular", parseInts(raw, 4));
-        data["weapon"] = [0, 0, 0, 0]
-        # In Java: data.put("weapon", Arrays.asList(0,0,0,0));
-        data["battlepass"] = [0, 0, 0, 0]
-        # In Java: data.put("battlepass", Arrays.asList(0,0,0,0));
-    return data
-    # In Java: return data;
-
-
-def _write_legacy_tokens(filename: str, data: Dict[str, List[int]]) -> None:
-    # In Java: static void writeLegacyTokens(String filename, Map<String,List<Integer>> data) throws IOException { ... }
-    out_lines: List[str] = []
-    # In Java: List<String> out = new ArrayList<>(12);
-    for cat in CATEGORIES:
-        # In Java: for (String cat : CATEGORIES) {
-        vals = (data.get(cat, [0, 0, 0, 0]) + [0, 0, 0, 0])[:4]
-        # In Java: List<Integer> vals = ensureSize4(data.getOrDefault(cat, Arrays.asList(0,0,0,0)));
-        for v in vals:
-            # In Java: for (Integer v : vals) { out.add(String.valueOf(v)); }
-            out_lines.append(str(v))
-    with open(filename, "w") as f:
-        # In Java: Files.write(Paths.get(filename), out, StandardCharsets.UTF_8);
-        f.write("\n".join(out_lines) + "\n")
 
 
 def register_user(filename: str, username: str, password: str) -> bool:
-    """Create a new user with a bcrypt-hashed password."""
-    user_path = _user_file(filename, username)
-    if os.path.exists(user_path):
+    """Create a new user with a bcrypt-hashed password in MongoDB."""
+    del filename  # Legacy argument retained for backwards compatibility
+    collection = _get_users_collection()
+    if collection.find_one({"username": username}):
         return False
-    os.makedirs(os.path.dirname(user_path), exist_ok=True)
     pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    out_obj = {"password_hash": pw_hash, "tokens": {}}
-    for cat in CATEGORIES:
-        out_obj["tokens"][cat] = [0, 0, 0, 0]
-    with open(user_path, "w") as f:
-        json.dump(out_obj, f, indent=2)
-    return True
+    doc: Dict[str, object] = {"username": username, "password_hash": pw_hash}
+    doc.update(_default_profile())
+    doc["tokens"] = _default_tokens()
+    try:
+        collection.insert_one(doc)
+        return True
+    except DuplicateKeyError:
+        return False
 
 
 def authenticate_user(filename: str, username: str, password: str) -> bool:
     """Validate supplied credentials against stored bcrypt hash."""
-    user_path = _user_file(filename, username)
-    if not os.path.exists(user_path):
+    del filename
+    collection = _get_users_collection()
+    doc = collection.find_one({"username": username})
+    if not doc:
         return False
-    try:
-        with open(user_path, "r") as f:
-            obj = json.load(f)
-    except Exception:
-        return False
-    hash_val = obj.get("password_hash")
+    hash_val = doc.get("password_hash")
     if not isinstance(hash_val, str) or not hash_val:
         return False
     return bcrypt.checkpw(password.encode(), hash_val.encode())
 
 
 def read_all_tokens(filename: str, username: str) -> Dict[str, List[int]]:
-    """Read tokens for the given user; fall back to legacy tokens.txt."""
-    user_path = _user_file(filename, username)
-    if os.path.exists(user_path):
-        try:
-            with open(user_path, "r") as f:
-                obj = json.load(f)
-        except Exception:
-            obj = {}
-        tokens_obj = obj.get("tokens", {})
-        data: Dict[str, List[int]] = {}
-        for cat in CATEGORIES:
-            vals = tokens_obj.get(cat, [0, 0, 0, 0])
-            vals = (list(vals) + [0, 0, 0, 0])[:4]
-            data[cat] = [int(v) for v in vals]
-        return data
-    return _read_legacy_tokens(filename)
+    """Read tokens for the given user from MongoDB."""
+    del filename
+    collection = _get_users_collection()
+    doc = collection.find_one({"username": username})
+    if not doc:
+        tokens = _default_tokens()
+        collection.update_one(
+            {"username": username},
+            {
+                "$set": {"tokens": tokens},
+                "$setOnInsert": {"password_hash": "", **_default_profile()},
+            },
+            upsert=True,
+        )
+        return tokens
+    tokens_obj = doc.get("tokens")
+    data: Dict[str, List[int]] = {}
+    for cat in CATEGORIES:
+        raw_vals = []
+        if isinstance(tokens_obj, dict):
+            raw_vals = tokens_obj.get(cat, [])  # type: ignore[assignment]
+        data[cat] = _ensure_size4(raw_vals)
+    return data
 
 
 def write_all_tokens(filename: str, username: str, data: Dict[str, List[int]]) -> None:
-    """Write tokens for the given user; legacy file for default user."""
-    user_path = _user_file(filename, username)
-    if username == "default" and not os.path.exists(user_path):
-        _write_legacy_tokens(filename, data)
-        return
-    os.makedirs(os.path.dirname(user_path), exist_ok=True)
-    password_hash = ""
-    if os.path.exists(user_path):
-        try:
-            with open(user_path, "r") as f:
-                obj = json.load(f)
-                password_hash = obj.get("password_hash", "")
-        except Exception:
-            pass
-    out_obj = {"password_hash": password_hash, "tokens": {}}
+    """Write tokens for the given user back to MongoDB."""
+    del filename
+    collection = _get_users_collection()
+    tokens: Dict[str, List[int]] = {}
     for cat in CATEGORIES:
-        vals = (data.get(cat, [0, 0, 0, 0]) + [0, 0, 0, 0])[:4]
-        out_obj["tokens"][cat] = [int(v) for v in vals]
-    with open(user_path, "w") as f:
-        json.dump(out_obj, f, indent=2)
+        tokens[cat] = _ensure_size4(data.get(cat, []))
+    collection.update_one(
+        {"username": username},
+        {
+            "$set": {"tokens": tokens},
+            "$setOnInsert": {"password_hash": "", **_default_profile()},
+        },
+        upsert=True,
+    )
+
 
 def compute_totals(tokens: List[int]) -> Tuple[int, float]:
-    # In Java: static Pair<Integer,Double> computeTotals(List<Integer> tokens) { int total = 0; for (int i=0;i<4;i++) total += tokens.get(i)*MINUTE_BUCKETS[i]; double hours = total/60.0; return new Pair<>(total, hours); }
     total_minutes = 0
-    # In Java: int total_minutes = 0;
     for count, minutes in zip(tokens, MINUTE_BUCKETS):
-        # In Java: for (int i=0;i<4;i++){ int count=tokens.get(i); int minutes=MINUTE_BUCKETS[i];
         total_minutes += count * minutes
-        # In Java: total_minutes += count * minutes;
     total_hours = total_minutes / 60.0
-    # In Java: double total_hours = total_minutes / 60.0;
     return total_minutes, total_hours
-    # In Java: return new Pair<>(total_minutes, total_hours);
+
 
 def build_totals_report(data: Dict[str, List[int]]) -> str:
-    # In Java: static String buildTotalsReport(Map<String,List<Integer>> data) { var sb=new StringBuilder(); ... return sb.toString(); }
     lines: List[str] = []
-    # In Java: List<String> lines = new ArrayList<>();
     lines.append("=== 2XP Totals Report ===")
-    # In Java: lines.add("=== 2XP Totals Report ===");
     grand_minutes = 0
-    # In Java: int grand_minutes = 0;
     for cat in CATEGORIES:
-        # In Java: for (String cat : CATEGORIES) {
         tokens = data[cat]
-        # In Java: List<Integer> tokens = data.get(cat);
         cat_minutes, cat_hours = compute_totals(tokens)
-        # In Java: var p = computeTotals(tokens); int cat_minutes = p.getKey(); double cat_hours = p.getValue();
         label = cat.capitalize()
-        # In Java: String label = Character.toUpperCase(cat.charAt(0)) + cat.substring(1);
         lines.append(f"{label}: {cat_minutes} minutes ({cat_hours:.2f} hours)")
-        # In Java: lines.add(label + ": " + cat_minutes + " minutes (" + String.format(Locale.US, "%.2f", cat_hours) + " hours)");
         grand_minutes += cat_minutes
-        # In Java: grand_minutes += cat_minutes;
     lines.append("")
-    # In Java: lines.add("");
     lines.append(f"Grand Total: {grand_minutes} minutes ({grand_minutes/60.0:.2f} hours)")
-    # In Java: lines.add("Grand Total: " + grand_minutes + " minutes (" + String.format(Locale.US, "%.2f", grand_minutes/60.0) + " hours)");
     return "\n".join(lines)
-    # In Java: return String.join("\n", lines);
+
+
+def read_tokens_for_user(username: str) -> Dict[str, List[int]]:
+    """Convenience wrapper mirroring the Java helper signature."""
+    return read_all_tokens("", username)
+
+
+def write_tokens_for_user(username: str, data: Dict[str, List[int]]) -> None:
+    """Convenience wrapper mirroring the Java helper signature."""
+    write_all_tokens("", username, data)

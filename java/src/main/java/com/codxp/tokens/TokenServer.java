@@ -102,7 +102,7 @@ public class TokenServer {
             if (username == null) {
                 return;
             }
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(username);
             Map<String, List<Integer>> out = new LinkedHashMap<>();
             data.forEach((k, v) -> out.put(k.key(), v));
             ctx.json(out);
@@ -119,7 +119,7 @@ public class TokenServer {
                 TokenCategory cat = TokenCategory.valueOf(k.toUpperCase());
                 data.put(cat, v);
             });
-            TokenLib.writeAllTokens(UserService.getTokensFile(), username, data);
+            TokenLib.writeAllTokens(username, data);
             ctx.status(HttpStatus.NO_CONTENT);
         });
 
@@ -128,7 +128,7 @@ public class TokenServer {
             if (username == null) {
                 return;
             }
-            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(UserService.getTokensFile(), username);
+            Map<TokenCategory, List<Integer>> data = TokenLib.readAllTokens(username);
             Map<String, Object> out = new LinkedHashMap<>();
             int grand = 0;
             for (TokenCategory cat : TokenCategory.values()) {

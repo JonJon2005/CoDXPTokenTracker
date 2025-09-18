@@ -1,6 +1,6 @@
 # Python CLI
 
-Interactive terminal tool for viewing and editing XP token counts stored in `../tokens.txt`.
+Interactive terminal tool for viewing and editing XP token counts stored in MongoDB.
 
 ## Run
 
@@ -13,4 +13,4 @@ Optionally install `colorama` for better colour support on Windows:
 ```bash
 pip install colorama
 ```
-The menu lets you inspect totals, adjust individual values or export summaries. Changes persist back to `../tokens.txt`.
+The menu lets you inspect totals, adjust individual values or export summaries. Changes persist back to MongoDB.
