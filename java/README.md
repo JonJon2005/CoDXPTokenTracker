@@ -1,6 +1,6 @@
 # Java Token Server
 
-REST API built with [Javalin](https://javalin.io/) that exposes XP token data stored in `../tokens.txt`.
+REST API built with [Javalin](https://javalin.io/) that exposes XP token data stored in MongoDB.
 
 ## Run
 
@@ -9,7 +9,7 @@ From the repository root:
 cd java
 mvn exec:java
 ```
-The server listens on `http://localhost:7001` and will create `../tokens.txt` with zeros if it does not exist.
+The server listens on `http://localhost:7001` and expects a reachable MongoDB instance (see repository README for configuration variables).
 
 ## Endpoints
 

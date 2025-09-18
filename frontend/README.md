@@ -21,5 +21,5 @@ React app built with Vite that displays and updates XP token counts through the 
 | `npm run preview` | Preview the production build locally. |
 | `npm run lint` | Run ESLint on the source files. |
 
-Use the `+`/`-` buttons in the UI to change counts and **Save** to persist them to `tokens.txt`.
+Use the `+`/`-` buttons in the UI to change counts and **Save** to persist them through the API to MongoDB.
 Click the account icon in the top-right to log out.
